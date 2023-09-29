@@ -2,7 +2,7 @@
  "collection_info": {
   "namespace": "arubanetworks",
   "name": "aruba_central",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "authors": [
    "Jay Pathak",
    "Ti Chiapuzio-Wong"
