@@ -1,0 +1,24 @@
+dependencies:
+    "ansible.netcommon": "*"
+description: ''
+documentation: ''
+homepage: ''
+issues: ''
+license: "Apache-2.0"
+name: aruba_central
+namespace: arubanetworks
+readme: README.md
+repository: https://github.com/aruba/aruba-central-ansible-collection
+tags: [
+  networking,
+  aruba,
+  central,
+  arubaos,
+  hpe,
+  arubacentral,
+  nms
+]
+version: 1.7.0
+authors:
+  - "Jay Pathak"
+  - "Ti Chiapuzio-Wong"
