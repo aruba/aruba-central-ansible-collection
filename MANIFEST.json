@@ -2,10 +2,10 @@
  "collection_info": {
   "namespace": "arubanetworks",
   "name": "aruba_central",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "authors": [
    "Jay Pathak",
-   "Tiffany Chiapuzio-Wong"
+   "Ti Chiapuzio-Wong"
   ],
   "readme": "README.md",
   "tags": [
