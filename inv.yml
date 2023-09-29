@@ -1,0 +1,10 @@
+all:
+  hosts:
+    central:
+      ansible_host: apigw-prod2.central.arubanetworks.com
+      ansible_connection: httpapi
+      ansible_network_os: arubanetworks.aruba_central.aruba_central
+      ansible_httpapi_use_ssl: True
+      ansible_httpapi_central_access_token: 6HBIEn09Iwg0eIhAcPTKC1o8qmnnSdpr
+      use_proxy: False
+

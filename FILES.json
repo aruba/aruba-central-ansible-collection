@@ -1,0 +1,131 @@
+{
+ "files": [
+  {
+   "name": ".",
+   "ftype": "dir",
+   "chksum_type": null,
+   "chksum_sha256": null,
+   "format": 1
+  },
+  {
+   "name": "plugins",
+   "ftype": "dir",
+   "chksum_type": null,
+   "chksum_sha256": null,
+   "format": 1
+  },
+  {
+   "name": "plugins/module_utils",
+   "ftype": "dir",
+   "chksum_type": null,
+   "chksum_sha256": null,
+   "format": 1
+  },
+  {
+   "name": "plugins/module_utils/central_http.py",
+   "ftype": "file",
+   "chksum_type": "sha256",
+   "chksum_sha256": "48381579b54c71ea70bfa9808f4ed5bc3e1bd2c0ef926bc92f8518a79dc1db09",
+   "format": 1
+  },
+  {
+   "name": "plugins/httpapi",
+   "ftype": "dir",
+   "chksum_type": null,
+   "chksum_sha256": null,
+   "format": 1
+  },
+  {
+   "name": "plugins/httpapi/aruba_central.py",
+   "ftype": "file",
+   "chksum_type": "sha256",
+   "chksum_sha256": "cac1f6584120ddece019ed2d669e181d8e5e2260761a7210112bb1b146824f12",
+   "format": 1
+  },
+  {
+   "name": "plugins/README.md",
+   "ftype": "file",
+   "chksum_type": "sha256",
+   "chksum_sha256": "ce019c2fa0b74e9457b36287058bb0f80bde03324d1499da1a80cd4a9b7ae4e1",
+   "format": 1
+  },
+  {
+   "name": "plugins/modules",
+   "ftype": "dir",
+   "chksum_type": null,
+   "chksum_sha256": null,
+   "format": 1
+  },
+  {
+   "name": "plugins/modules/central_groups.py",
+   "ftype": "file",
+   "chksum_type": "sha256",
+   "chksum_sha256": "a383d900bbe2874e9349bedffed054f9c40b3b0c00f01e06d15f6b391d5d20cb",
+   "format": 1
+  },
+  {
+   "name": "plugins/modules/central_templates.py",
+   "ftype": "file",
+   "chksum_type": "sha256",
+   "chksum_sha256": "a1fd3e3aae620fbbe61f5ec179ff456ec609d52aea6b08db2af5396716ff4a07",
+   "format": 1
+  },
+  {
+   "name": "plugins/modules/central_devices.py",
+   "ftype": "file",
+   "chksum_type": "sha256",
+   "chksum_sha256": "61ee3fffd621f59ce00b2ef5f6edfd86b422dd9a29b3cf58be3512d4dca38bf5",
+   "format": 1
+  },
+  {
+   "name": "plugins/modules/central_sites.py",
+   "ftype": "file",
+   "chksum_type": "sha256",
+   "chksum_sha256": "2c6034899eecb0a3da5770eedc5e90fda9f8ed2d5d634ea8112b27de490e2ee4",
+   "format": 1
+  },
+  {
+   "name": "plugins/modules/central_variables.py",
+   "ftype": "file",
+   "chksum_type": "sha256",
+   "chksum_sha256": "f8329946355c2dd58f60080a44a3c5f1e30c8c7b6d00e3b61406979bd48a82a6",
+   "format": 1
+  },
+  {
+   "name": "README.md",
+   "ftype": "file",
+   "chksum_type": "sha256",
+   "chksum_sha256": "1227add3ba0c7b1da5a582fa884f51a3b04c02cf09d0a86297534226ff69c443",
+   "format": 1
+  },
+  {
+   "name": "inv.yml",
+   "ftype": "file",
+   "chksum_type": "sha256",
+   "chksum_sha256": "ebaf92ecc19ad620863bf9c204e08109dfbaac69bbe05d96f7c2a316faf43407",
+   "format": 1
+  },
+  {
+   "name": "playbook.yml",
+   "ftype": "file",
+   "chksum_type": "sha256",
+   "chksum_sha256": "309dc6ea297e8fd239c803a92c1b8ec443a590f8f64354e29bffa691bcb0a023",
+   "format": 1
+  },
+  {
+   "name": "meta",
+   "ftype": "dir",
+   "chksum_type": null,
+   "chksum_sha256": null,
+   "format": 1
+  },
+  {
+   "name": "meta/runtime.yml",
+   "ftype": "file",
+   "chksum_type": "sha256",
+   "chksum_sha256": "354d46b8f13b37e3b60677caa14c55cf4ffbdc37354379e8070629876f37e914",
+   "format": 1
+  }
+ ],
+ "format": 1
+}

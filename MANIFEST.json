@@ -1,0 +1,43 @@
+{
+ "collection_info": {
+  "namespace": "arubanetworks",
+  "name": "aruba_central",
+  "version": "1.0.1",
+  "authors": [
+   "Jay Pathak",
+   "Tiffany Chiapuzio-Wong"
+  ],
+  "readme": "README.md",
+  "tags": [
+   "networking",
+   "aruba",
+   "aruba_central",
+   "central",
+   "cloud",
+   "aos",
+   "iap",
+   "arubacentral",
+   "esp"
+  ],
+  "description": "The Aruba Central Ansible Collection comprises of modules and plugins to establish connection to Aruba Central and build automation workflows using REST API.",
+  "license": [
+   "GPL-3.0-or-later"
+  ],
+  "license_file": null,
+  "dependencies": {
+   "ansible.netcommon": "*"
+  },
+  "repository": "https://github.com/aruba/aruba-central-ansible-collection",
+  "documentation": "https://github.com/aruba/aruba-central-ansible-collection/docs",
+  "homepage": null,
+  "issues": "https://github.com/aruba/aruba-central-ansible-collection/issues"
+ },
+ "file_manifest_file": {
+  "name": "FILES.json",
+  "ftype": "file",
+  "chksum_type": "sha256",
+  "chksum_sha256": "a83058b339a54e223dffdad5db36d4f86542066981c37439ed0f9959535f7adb",
+  "format": 1
+ },
+ "format": 1
+}

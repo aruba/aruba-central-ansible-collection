@@ -1,0 +1,13 @@
+---
+-  hosts: all
+   collections:
+     - arubanetworks.aruba_central
+   vars:
+     ansible_python_interpreter: ~/project_ansible/bin/python3
+   tasks:
+     - name: Get all the UI and Template Groups on Central
+       central_groups:
+         action: get_groups
+         limit: 20
+         offset: 0
+
