@@ -45,7 +45,7 @@ The variables that should be defined in your inventory for your Aruba Central ac
 
 - `ansible_host`: Cluster-specific Base-URL for the API Gateway on Aruba Central in FQDN format, which can be found in the API Documentation URL on API Gateway
 - `ansible_connection`: Must always be set to  `httpapi`
-- `ansible_network_os`: Must always be set to  `aruba_central`
+- `ansible_network_os`: Must always be set to  `arubanetworks.aruba_central.aruba_central`
 - `ansible_httpapi_use_ssl`: Must always be set to  `True`
 - `ansible_httpapi_central_access_token`: Aruba Central's API access token
 
@@ -59,7 +59,7 @@ all:
     central:
       ansible_host: apigw-prod2.central.arubanetworks.com
       ansible_connection: httpapi
-      ansible_network_os: aruba_central
+      ansible_network_os: arubanetworks.aruba_central.aruba_central
       ansible_httpapi_use_ssl: True
       ansible_httpapi_central_access_token: CnjDaXXxvnjrvJRwxxxxXXxxXXXXxxxx
 ```
@@ -67,7 +67,7 @@ all:
 ##### INI
 
 ```INI
-arubacentral ansible_host=apigw-prod2.central.arubanetworks.com  ansible_connection=httpapi ansible_network_os=aruba_central  ansible_httpapi_use_ssl=True  ansible_httpapi_central_access_token=CnjDaXXxvnjrvJRwxxxxXXxxXXXXxxxx
+arubacentral ansible_host=apigw-prod2.central.arubanetworks.com  ansible_connection=httpapi ansible_network_os=arubanetworks.aruba_central.aruba_central ansible_httpapi_use_ssl=True  ansible_httpapi_central_access_token=CnjDaXXxvnjrvJRwxxxxXXxxXXXXxxxx
 ```
 
 
