@@ -17,7 +17,7 @@ description:
   - This module allows you to execute API calls to Classic HPE Aruba Networking Central.
   - It uses the classic connection plugin to handle authentication and API calls.
   - It does not handle refresh token or OAuth token generation; you must provide a valid access token.
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   base_url:

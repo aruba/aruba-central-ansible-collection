@@ -15,7 +15,7 @@ module: central_sites
 short_description: Create or manage Sites in HPE Aruba Networking Central
 description:
   - This module allows you to create and manage Sites in HPE Aruba Networking Central.
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   base_url:

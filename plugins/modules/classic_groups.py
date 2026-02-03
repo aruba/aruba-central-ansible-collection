@@ -16,7 +16,7 @@ short_description: Assign or Unassign Devices to a Site in HPE Aruba Networking 
 description:
   - This module allows you to assign or unassign devices to a site in HPE Aruba Networking Central.
   - It does not handle refresh token or OAuth token generation; you must provide a valid access token.
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   base_url:
@@ -166,7 +166,6 @@ from ansible_collections.arubanetworks.hpeanw_central.plugins.module_utils._modu
     ModuleClassicConnection,
     classic_base_argument_spec,
 )
-from pycentral.classic.base import ArubaCentralBase
 import traceback
 
 # Classic API Endpoints to gather device information
@@ -270,7 +269,7 @@ def main():
 
         if device_group_resp["code"] != 200:
             module.fail_json(
-                msg=f"Failed to retrieve device groups",
+                msg="Failed to retrieve device groups",
                 result=device_group_resp,
             )
 

@@ -15,7 +15,7 @@ module: glp_token
 short_description: Generate OAuth Token for HPE GreenLake
 description:
   - This module allows you to generate an OAuth Token for HPE GreenLake.
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   client_id:

@@ -15,7 +15,7 @@ module: glp_devices
 short_description: Allows for application & subscription assignment of devices managed in HPE GreenLake Platform.
 description:
   - This module allows for application & subscription assignment of devices in HPE GreenLake Platform.
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   client_id:
@@ -246,7 +246,9 @@ def main():
                 )
         if subscription_key:
             # Get Subscription ID returns tuple
-            _, sub_id = sub.get_sub_id(conn=glp_conn, key=subscription_key)
+            sub_id_result, sub_id = sub.get_sub_id(
+                conn=glp_conn, key=subscription_key
+            )
             # Fail is subscription key is invalid
             if not sub_id:
                 module.fail_json(

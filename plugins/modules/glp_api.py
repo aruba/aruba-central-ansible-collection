@@ -16,7 +16,7 @@ short_description: Execute generic API calls to HPE GreenLake Platform
 description:
   - This module allows you to execute API calls to HPE GreenLake Platform.
   - It uses the glp connection plugin to handle authentication and API calls.
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   client_id:

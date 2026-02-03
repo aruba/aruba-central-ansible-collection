@@ -13,7 +13,7 @@ description:
   - Reads inventory from HPE Aruba Networking Central
   - Dynamically creates groups based on device attributes
   - Supports grouping by site, device type, model, and more
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   plugin:

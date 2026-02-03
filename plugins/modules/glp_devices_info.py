@@ -16,7 +16,7 @@ short_description: Retrieve a list of devices managed in HPE GreenLake Platform.
 description:
   - This module allows you to retrieve information about devices managed in HPE GreenLake Platform.
   - Provides various subsets to fetch different types of device information.
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   client_id:
