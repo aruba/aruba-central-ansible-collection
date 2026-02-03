@@ -54,7 +54,7 @@ options:
     description: >
       Filter expression for retrieving specific sites when using site_by_filter subset
     type: str
-    required: false    
+    required: false
   site_name:
     description: >
       Site name to retrieve when using site_by_name subset

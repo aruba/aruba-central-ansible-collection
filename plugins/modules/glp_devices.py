@@ -48,7 +48,7 @@ options:
       id:
         description: >
           ID of application to assign devices to
-        type: str    
+        type: str
       name:
         description: >
           Name of application to assign devices to

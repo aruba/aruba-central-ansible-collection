@@ -12,12 +12,12 @@ base_url:
   required: true
 client_id:
   description: >
-    The client ID for the Central account, used to create OAuth token, required if oauth_token is not provided
+    The client ID for the Central account, used to create OAuth token
   type: str
   required: true
 client_secret:
   description: >
-    The client secret for the Central account, used to create OAuth token, required if oauth_token is not provided
+    The client secret for the Central account, used to create OAuth token
   type: str
   required: true
 ```
@@ -33,7 +33,7 @@ client_secret:
   register: token_result
 
 - set_fact:
-    oauth_token: "{{ token_result['access_token'] }}"
+    central_access_token: "{{ token_result['access_token'] }}"
 ```
 
 ##### RETURNED

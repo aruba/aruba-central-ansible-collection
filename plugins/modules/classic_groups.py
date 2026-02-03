@@ -340,12 +340,13 @@ def main():
 
             elif state == "unassigned":
                 if device_group_mapping[device_serial_number] != group_name:
-                    # module.exit_json(changed=False, msg=f"Device {device_serial_number} is already unassigned from group {group_name} and current group is {device_group_mapping[device_serial_number]}.")
+                    # Already unassigned from this group
                     if device_group_mapping[device_serial_number]:
                         # Throw warning that device is assigned to different group
                         pass
                     result["msg"] += (
-                        f" Device {device_serial_number} is already unassigned from group {group_name} and current group is {device_group_mapping[device_serial_number]}."
+                        f" Device {device_serial_number} is already unassigned from group {group_name} "
+                        f"and current group is {device_group_mapping[device_serial_number]}."
                     )
                     continue
 

@@ -238,12 +238,14 @@ result:
       description: Dictionary containing the found differences between the
         existing configuration and the Ansible provided configuration
       returned: when state is merged and an update occurs
+      type: dict
       contains:
         old_value:
           description: List containing the existing configuration(s) in Central
+          type: list
         new_value:
           description: List containing the desired configuration(s) from Ansible
-      type: dict
+          type: list
 """
 
 from ansible.module_utils.basic import AnsibleModule

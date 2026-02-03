@@ -226,7 +226,9 @@ def main():
                     and device_site_mapping[device_serial_number] != site_name
                 ):
                     module.fail_json(
-                        msg=f"Device {device_serial_number} is already assigned to site {device_site_mapping[device_serial_number]}. Please remove the device from the site before assigning it to a new site."
+                        msg=f"Device {device_serial_number} is already assigned to site "
+                        f"{device_site_mapping[device_serial_number]}. Please remove the device "
+                        f"from the site before assigning it to a new site."
                     )
 
                 elif (
@@ -242,12 +244,13 @@ def main():
 
             elif state == "unassigned":
                 if device_site_mapping[device_serial_number] != site_name:
-                    # module.exit_json(changed=False, msg=f"Device {device_serial_number} is already unassigned from site {site_name} and current site is {device_site_mapping[device_serial_number]}.")
+                    # Already unassigned from this site
                     if device_site_mapping[device_serial_number]:
                         # Throw warning that device is assigned to different site
                         pass
                     result["msg"] += (
-                        f" Device {device_serial_number} is already unassigned from site {site_name} and current site is {device_site_mapping[device_serial_number]}."
+                        f" Device {device_serial_number} is already unassigned from site {site_name} "
+                        f"and current site is {device_site_mapping[device_serial_number]}."
                     )
                     continue
             process_devices.append(device_serial_number)
@@ -262,7 +265,8 @@ def main():
             )
             if site_unassociation_resp["code"] != 200:
                 module.fail_json(
-                    msg=f"Failed to unassociate devices {site_unassociation_resp['msg']['failed']} from site {site_name}. Error: {site_unassociation_resp['msg']}",
+                    msg=f"Failed to unassociate devices {site_unassociation_resp['msg']['failed']} "
+                    f"from site {site_name}. Error: {site_unassociation_resp['msg']}",
                     result=site_unassociation_resp,
                 )
 

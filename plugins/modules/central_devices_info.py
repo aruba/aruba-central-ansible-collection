@@ -64,7 +64,7 @@ options:
     description: >
       Filter expression for retrieving specific devices when using device_by_filter subset
     type: str
-    required: false       
+    required: false
 """
 
 EXAMPLES = r"""
@@ -105,7 +105,7 @@ EXAMPLES = r"""
     access_token: AABBCC-111222-333444-555666777888
     subset: device_by_filter
     device_filter: "deviceType eq SWITCH"
-  register: devices_result  
+  register: devices_result
 """
 
 RETURN = r"""
