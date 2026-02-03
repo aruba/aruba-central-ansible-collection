@@ -1,0 +1,56 @@
+---
+# Example playbook for Configuration Profiles in HPE Aruba Networking Central
+- name: Create Library Profiles in HPE Aruba Networking Central
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Create OAuth Token from Central
+      arubanetworks.hpeanw_central.central_token:
+        base_url: "{{ central_base_url }}"
+        client_id: "{{ central_client_id }}"
+        client_secret: "{{ central_client_secret }}"
+      register: token_result
+
+    - debug:
+        var: token_result
+
+    - set_fact:
+        oauth_token: "{{ token_result['access_token'] }}"
+
+    - name: Create a new Library VLAN profile
+      arubanetworks.hpeanw_central.central_profiles:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ oauth_token }}"
+        name: 100
+        path: "layer2-vlan"
+        config_dict:
+          vlan: 100
+          name: "Corp-VLAN"
+          description: "Corporate VLAN for main office"
+        state: merged
+
+    - name: Create Library Default Gateway
+      arubanetworks.hpeanw_central.central_profiles:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ oauth_token }}"
+        name: rsvl-default-gateway
+        path: static-route
+        state: merged
+        config_dict:
+          default-gateway:
+            - dg-name: rsvl-default-gateway
+              forwarding-type: "NEXTHOP"
+              ipv4-address: "192.168.0.1"
+
+    - name: Create Library VRFs
+      arubanetworks.hpeanw_central.central_profiles:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ oauth_token }}"
+        name: "{{item}}"
+        path: vrfs
+        state: merged
+        config_dict:
+          name: "{{item}}"
+      loop:
+        - rsvl-corp
+        - rsvl-guest

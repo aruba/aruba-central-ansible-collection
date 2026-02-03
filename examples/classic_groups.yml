@@ -1,0 +1,50 @@
+---
+# Example playbook for Configuration Profiles in HPE Aruba Networking Central
+- name: Create Sites in HPE Aruba Networking Central
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Assign Devices to Sites in Classic HPE Aruba Networking Central
+      arubanetworks.hpeanw_central.classic_groups:
+        base_url: "{{ classic_base_url }}"
+        access_token: "{{ classic_access_token }}"
+        group_name: "Ansible-Device-Group-1"
+        group_attributes:
+          template_info:
+            Wired: false
+          group_properties:
+            AllowedDevTypes:
+              - AccessPoints
+              - Gateways
+              - Switches
+            Architecture: AOS10
+            ApNetworkRole: Standard
+            GwNetworkRole: BranchGateway
+            AllowedSwitchTypes:
+              - AOS_CX
+            NewCentral: true
+        device_type: "ACCESS_POINT"
+        devices:
+          - "PHQSL1N5HB"
+          - "PHQSL1N56K"
+        state: merged
+      register: sites_result
+
+
+    - name: Create a device group for Switches
+      arubanetworks.hpeanw_central.classic_groups:
+          base_url: "{{ classic_base_url }}"
+          access_token: "{{ classic_access_token }}"
+          group_name: "Fabric2-Switches"
+          group_attributes:
+            template_info:
+              Wired: false
+            group_properties:
+              AllowedDevTypes:
+                - Switches
+              AllowedSwitchTypes:
+                - AOS_CX
+              NewCentral: true
+          device_type: "SWITCH"
+          devices: []
+          state: merged

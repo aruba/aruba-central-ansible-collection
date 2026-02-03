@@ -1,0 +1,55 @@
+# HPE Aruba Networking Central Dynamic Inventory
+# This file demonstrates how to use the central_inventory plugin
+
+# Basic configuration with environment variables
+# Set these environment variables:
+# export ARUBA_CENTRAL_BASE_URL="https://us5.api.central.arubanetworks.com"
+# export ARUBA_CENTRAL_CLIENT_ID="aabbccddeeffgghhiijj"
+# export ARUBA_CENTRAL_CLIENT_SECRET="jjiiqqooppmmnnooppqq"
+
+plugin: arubanetworks.hpeanw_central.central_inventory
+
+# Optional: Override environment variables with explicit values
+# If output_file is specified, the inventory will be cached to that file
+# and the access token will be reused from that file on subsequent runs
+# to avoid generating a new token each time.
+# central_base_url: "https://us5.api.central.arubanetworks.com"
+# central_client_id: "aabbccddeeffgghhiijj"
+# central_client_secret: "jjiiqqooppmmnnooppqq"
+
+# Or use access token instead of client credentials
+# Will use instead of output_file token if both are present
+# central_access_token: your_access_token
+
+# Define which groups to create (default: site and device_type)
+groups:
+  - site
+  - device_type
+  - model
+  - status
+  - group
+
+# Optional: Filter devices
+# filters:
+#   device_type:
+#     - ACCESS_POINT
+#     - SWITCH
+#   status:
+#     - ONLINE
+
+# Optional: Create custom host variables using Jinja2
+# compose:
+#   ansible_host: ipv4
+#   device_location: siteName + ' - ' + (deviceGroupName | default('No Group'))
+#   is_provisioned: isProvisioned | default(false)
+
+# Optional: Create dynamic groups based on variables
+# keyed_groups:
+#   - key: model
+#     prefix: model
+#   - key: softwareVersion
+#     prefix: sw_version
+#     separator: '_'
+
+# Optional: Write inventory to a YAML file, including the generated access token
+output_file: ./central_devices_inventory.yml

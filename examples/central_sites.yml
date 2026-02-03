@@ -1,0 +1,43 @@
+---
+# Example playbook to Create Sites and Assign Devices in HPE Aruba Networking Central
+- name: Create Sites and Assign Devices in HPE Aruba Networking Central
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Create OAuth Token from Central
+      arubanetworks.hpeanw_central.central_token:
+        base_url: "{{ central_base_url }}"
+        client_id: "{{ central_client_id }}"
+        client_secret: "{{ central_client_secret }}"
+      register: token_result
+      no_log: true
+
+    - set_fact:
+        oauth_token: "{{ token_result['access_token'] }}"
+      no_log: true
+
+    - name: Create a new Site
+      arubanetworks.hpeanw_central.central_sites:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ oauth_token }}"
+        site_attributes:
+          name: Ansible Campus
+          address: "123 S St"
+          city: "Sacramento"
+          state: "California"
+          country: "United States"
+          zipcode: "12345"
+          timezone: "America/Los_Angeles"
+        state: merged
+
+    - name: Assign Devices to Sites Using Classic HPE Aruba Networking Central API
+      arubanetworks.hpeanw_central.classic_sites:
+        base_url: "{{ classic_base_url }}"
+        access_token: "{{ classic_access_token }}"
+        site_name: "Ansible Campus"
+        device_type: "ACCESS_POINT"
+        devices:
+          - "AABBCCDD11"
+          - "DDCCBBAA22"
+        state: assigned
+      register: sites_result

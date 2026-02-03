@@ -1,0 +1,132 @@
+---
+# Ansible Playbook to Onboard Devices into HPE GreenLake Platform and Central
+# The steps in this playbook are the typical steps for onboarding devices into HPE Aruba Networking Central for configuration management.
+# For monitoring only do not assign devices to groups.
+# This playbook assumes devices are in Inventory of GreenLake Platform.
+- name: Onboard Devices into HPE Aruba Networking Central
+  hosts: localhost
+  gather_facts: no
+  vars:
+    site_name: "Ansible-Campus"
+    group_name: "Ansible-"
+    # For Valid regions see : https://developer.greenlake.hpe.com/docs/greenlake/services/service-catalog/public/glossary#region
+    application_region: "us-west"
+    onboard_list:
+      - TW3BLZBBBQ
+      - TW3BLZBBBB
+      - CNSKKLBBB8
+  tasks:
+    # Authenticate to GreenLake Platform and obtain access token for API calls
+    - name: Generate Token for Session
+      arubanetworks.hpeanw_central.glp_token:
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+      register: token_result
+      no_log: True
+
+    # Fetch all devices currently registered in GreenLake Platform
+    - name: Retrieve Devices from GLP
+      arubanetworks.hpeanw_central.glp_devices_info:
+        access_token: "{{token_result['access_token']}}"
+      register: glp_device_inventory
+
+    # Build a list of devices to be onboarded based on serial numbers provided
+    - name: Build Onboard Device List
+      set_fact:
+        onboard_devices: "{{ onboard_devices | default([]) + [item] }}"
+      loop: "{{ glp_device_inventory.devices }}"
+      when: item.serialNumber in onboard_list
+
+    # Create a lookup table mapping part numbers to their required applications and subscriptions
+    - name: Create mapping of device part numbers to applications and subscriptions
+      set_fact:
+        device_part_mapping: "{{ device_part_mapping | default({}) | combine({item.partNumber: {'application': item.application, 'subscription': item.subscription[0]}}) }}"
+      loop: "{{ glp_device_inventory.devices }}"
+      when: item.subscription != None and item.subscription | length > 0 and item.application != None
+
+    # Assign devices to their appropriate applications and subscriptions in GreenLake Platform
+    - name: Assign Devices to GLP & Assign subscriptions
+      arubanetworks.hpeanw_central.glp_devices:
+        access_token: "{{token_result['access_token']}}"
+        application:
+          id: "{{ device_part_mapping[item.partNumber].application.id }}"
+          region: "{{application_region}}"
+        subscription_key: "{{ device_part_mapping[item.partNumber].subscription.key }}"
+        devices:
+          - "{{ item.serialNumber }}"
+        state: "assigned"
+      loop: "{{ onboard_devices }}"
+      when: onboard_devices is defined and onboard_devices | length > 0
+
+    # Create a site in Central for organizing devices by physical location
+    - name: Create Site Ansible_Site in Central
+      arubanetworks.hpeanw_central.central_sites:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ central_access_token }}"
+        site_attributes:
+          name: "{{ site_name }}"
+          address: "123 Main St"
+          city: "San Jose"
+          state: "California"
+          country: "United States"
+          zipcode: "12345"
+          timezone: "America/Los_Angeles"
+        state: merged
+
+    # Associate unprovisioned devices with the created site in Classic Central, ignoring errors for devices in absent state
+    - name: Assign Devices to Sites in Classic HPE Aruba Networking Central
+      arubanetworks.hpeanw_central.classic_sites:
+        base_url: "{{ classic_base_url }}"
+        access_token: "{{ classic_access_token }}"
+        site_name: "{{ site_name }}"
+        device_type: "{{item.deviceType}}"
+        devices:
+          - "{{ item.serialNumber }}"
+        state: assigned
+      loop: "{{ onboard_devices }}"
+      when: onboard_devices is defined and onboard_devices | length > 0
+      ignore_errors: yes
+
+    # Create device type-specific groups and assign devices for configuration management, ignoring errors for devices in absent state
+    - name: Create Group and Assign Devices to Group for Configuration in HPE Aruba Networking Central
+      arubanetworks.hpeanw_central.classic_groups:
+        base_url: "{{ classic_base_url }}"
+        access_token: "{{ classic_access_token }}"
+        group_name: "{{ group_name }}{{ item.deviceType }}"
+        group_attributes:
+          template_info:
+            Wired: false
+          group_properties:
+            AllowedDevTypes:
+              - AccessPoints
+              - Gateways
+              - Switches
+            Architecture: AOS10
+            ApNetworkRole: Standard
+            GwNetworkRole: WLANGateway
+            AllowedSwitchTypes:
+              - AOS_CX
+            NewCentral: true
+        device_type: "{{ item.deviceType }}"
+        devices:
+          - "{{ item.serialNumber }}"
+        state: merged
+      when: onboard_devices is defined and onboard_devices | length > 0
+      loop: "{{ onboard_devices }}"
+      ignore_errors: yes
+
+    # Assign device functions/personas required for configuration management in Central, ignoring errors for devices in absent state
+    - name: Assign Device Functions/Personas in HPE Aruba Networking Central
+      arubanetworks.hpeanw_central.central_api:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ central_access_token }}"
+        method: POST
+        path: "/network-config/v1alpha1/persona-assignment/{{ 'ACCESS_SWITCH' if item.deviceType == 'SWITCH' else ('CAMPUS_AP' if item.deviceType == 'ACCESS_POINT' else 'MOBILITY_GW') }}"
+        data:
+          persona-device-list:
+            - device-function: "{{ 'ACCESS_SWITCH' if item.deviceType == 'SWITCH' else ('CAMPUS_AP' if item.deviceType == 'ACCESS_POINT' else 'MOBILITY_GW') }}"
+              device-id: 
+                - "{{ item.serialNumber }}"
+      when: onboard_devices is defined and onboard_devices | length > 0
+      loop: "{{ onboard_devices }}"
+      ignore_errors: yes

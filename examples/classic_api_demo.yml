@@ -1,0 +1,16 @@
+---
+# Example playbook for Classic HPE Aruba Networking Central API calls
+- name: Demo Classic HPE Aruba Networking Central API Calls
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Get Sites from Classic Central
+      arubanetworks.hpeanw_central.classic_api:
+        base_url: "{{ classic_base_url }}"
+        access_token: "{{ classic_access_token }}"
+        method: GET
+        path: "/central/v2/sites"
+      register: sites_result
+
+    - debug:
+        var: sites_result

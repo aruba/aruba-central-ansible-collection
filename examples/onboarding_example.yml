@@ -1,0 +1,100 @@
+---
+# Ansible Playbook to Onboard Devices into HPE GreenLake Platform and Central
+# The steps in this playbook are the typical steps for onboarding devices into HPE Aruba Networking Central for configuration management.
+# For monitoring only do not assign devices to groups.
+- name: Onboard Devices into HPE Aruba Networking Central
+  hosts: prod_instance
+  gather_facts: no
+  vars:
+    site_name: "Ansible-Campus"
+    group_name: "Ansible-APs"
+  tasks:
+    - name: Generate Token for Session
+      arubanetworks.hpeanw_central.glp_token:
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+      register: token_result
+      no_log: True
+
+    - name: Assign Devices to GLP & Assign subscriptions
+      arubanetworks.hpeanw_central.glp_devices:
+        access_token: "{{token_result['access_token']}}"
+        application:
+          name: HPE Aruba Networking Central
+          region: "US West"
+        subscription_key: "11122244455566677788899900011"
+        devices:
+          - "PHQSL1116K"
+          - "PHQSL222HB"
+        state: "assigned"
+
+    - name: Create OAuth Token from Central
+      arubanetworks.hpeanw_central.central_token:
+        base_url: "{{ central_base_url }}"
+        client_id: "{{ central_client_id }}"
+        client_secret: "{{ central_client_secret }}"
+      register: token_result
+      no_log: True
+
+    - set_fact:
+        oauth_token: "{{ token_result['access_token'] }}"
+      no_log: True
+
+    - name: Create Site Ansible_Site in Central
+      arubanetworks.hpeanw_central.central_sites:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ oauth_token }}"
+        site_attributes:
+          name: "{{ site_name }}"
+          address: "123 Main St"
+          city: "San Jose"
+          state: "California"
+          country: "United States"
+          zipcode: "12345"
+          timezone: "America/Los_Angeles"
+        state: merged
+
+    - name: Assign Devices to Sites in Classic HPE Aruba Networking Central
+      arubanetworks.hpeanw_central.classic_sites:
+        base_url: "{{ classic_base_url }}"
+        access_token: "{{ classic_access_token }}"
+        site_name: "{{ site_name }}"
+        device_type: "ACCESS_POINT"
+        devices:
+          - "PHQSL1116K"
+          - "PHQSL222HB"
+        state: assigned
+
+    - name: Create Group and Assign Devices to Group for Configuration in HPE Aruba Networking Central
+      arubanetworks.hpeanw_central.classic_groups:
+        base_url: "{{ classic_base_url }}"
+        access_token: "{{ classic_access_token }}"
+        group_name: "{{ group_name }}"
+        group_attributes:
+          template_info:
+            Wired: false
+          group_properties:
+            AllowedDevTypes:
+              - AccessPoints
+            Architecture: AOS10
+            ApNetworkRole: Standard
+            NewCentral: true
+        device_type: "ACCESS_POINT"
+        devices:
+          - "PHQSL1116K"
+          - "PHQSL222HB"
+        state: merged
+
+    # Device Function/Persona assignment required for Configuration Management in Central
+    - name: Assign Device Functions/Personas in HPE Aruba Networking Central
+      arubanetworks.hpeanw_central.central_api:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ oauth_token }}"
+        method: POST
+        path: "/network-config/v1alpha1/persona-assignment"
+        data:
+          persona-device-list:
+            - device-function: "CAMPUS_AP"
+              device-id:
+                - "PHQSL1116K"
+                - "PHQSL222HB"

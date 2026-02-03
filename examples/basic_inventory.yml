@@ -1,0 +1,11 @@
+all:
+  hosts:
+    localhost:
+      ansible_connection: local # Do not change
+      central_base_url: <central_base_url>
+      central_client_id: <central_client_id>
+      central_client_secret:  <central_client_secret>
+      glp_client_id: <glp_client_id>
+      glp_client_secret: <glp_client_secret>
+      classic_base_url: <classic_base_url>
+      classic_access_token: <classic_access_token>

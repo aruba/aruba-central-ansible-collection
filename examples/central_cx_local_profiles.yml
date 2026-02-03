@@ -1,0 +1,104 @@
+---
+# Example playbook local config profiles for an AOS-CX Switch
+- name: Configure Local L2 interfaces & Banner on AOS-CX Switch
+  hosts: localhost
+  vars:
+    # Change this to your switch's SITE scope-id
+    site_scope_id: 37104267151
+    # Change this to your switch's DEVICE scope-id, persona & serial number
+    switch_serial: AAABBBCCCDD
+    switch_scope_id: 46505163378
+    switch_persona: ACCESS_SWITCH
+    interfaces:
+      - interface: 1/1/14
+        access_vlan: 100
+      - interface: 1/1/15
+        access_vlan: 100
+      - interface: 1/1/16
+        access_vlan: 100
+  gather_facts: no
+  tasks:
+    - name: Create OAuth Token from Central
+      arubanetworks.hpeanw_central.central_token:
+        base_url: "{{ central_base_url }}"
+        client_id: "{{ central_client_id }}"
+        client_secret: "{{ central_client_secret }}"
+      register: token_result
+
+    - set_fact:
+        oauth_token: "{{ token_result['access_token'] }}"
+
+    - name: Create Library Vlan Config Profile
+      arubanetworks.hpeanw_central.central_profiles:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ oauth_token }}"
+        path: "layer2-vlan"
+        name: 100
+        state: merged
+        config_dict:
+          vlan: 100
+          enable: True
+          name: Ansible-VLAN
+
+    - name: Assign Library Profile to Scope
+      arubanetworks.hpeanw_central.central_api:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ oauth_token }}"
+        method: POST
+        path: "/network-config/v1alpha1/scope-maps"
+        data:
+          scope-map:
+            - scope-name: "{{ site_scope_id }}"
+              persona: "{{ switch_persona }}"
+              resource: "layer2-vlan/100"
+
+    - name: Update local L2 interfaces Device scope
+      arubanetworks.hpeanw_central.central_profiles:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ oauth_token }}"
+        name: "{{item.interface}}"
+        path: "ethernet-interfaces"
+        resource: "ethernet-interfaces"
+        state: merged
+        local:
+          scope_id: "{{ switch_scope_id }}"
+          persona: "{{ switch_persona }}"
+        config_dict:
+          poe:
+              enabled: True
+          enable: true
+          routing: false
+          switchport:
+              interface-mode: ACCESS
+              access-vlan: "{{item.access_vlan}}"
+      loop: "{{interfaces}}"
+
+    - name: Create a local Banner Device scope
+      arubanetworks.hpeanw_central.central_profiles:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ oauth_token }}"
+        name: profile-{{switch_serial}}
+        path: local-management
+        resource: local-management
+        state: merged
+        local:
+          scope_id: "{{ switch_scope_id }}"
+          persona: "{{ switch_persona }}"
+        config_dict:
+          name: profile-{{switch_serial}}
+          webservers:
+            enabled-vrfs:
+              - default
+              - mgmt
+          ssh-server-global-configs:
+            enabled-vrfs:
+              - default
+              - mgmt
+          banner-message:
+            message-delimiter: "~"
+            text: |
+              !
+              WARNING - Unauthorized access to this device is strictly prohibited - WARNING
+              This network is restricted to authorized users for legitimate business purposes only.
+              Unauthorized access is a criminal offense and a violation of federal and state law.
+              !

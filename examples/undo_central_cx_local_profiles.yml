@@ -1,0 +1,91 @@
+---
+# Example playbook local config profiles for an AOS-CX Switch
+- name: Delete Vlans, Local L2 interfaces & Banner on AOS-CX Switch
+  hosts: localhost
+  vars:
+    # Change this to your switch's SITE scope-id
+    site_scope_id: 999888666555
+    # Change this to your switch's DEVICE scope-id, persona & serial number
+    switch_serial: AAABBBCCCDD
+    switch_scope_id: 111222333444
+    switch_persona: ACCESS_SWITCH
+    interfaces:
+      - interface: 1/1/14
+        access_vlan: 100
+      - interface: 1/1/15
+        access_vlan: 100
+      - interface: 1/1/16
+        access_vlan: 100
+  gather_facts: no
+  tasks:
+    - name: Create OAuth Token from Central
+      arubanetworks.hpeanw_central.central_token:
+        base_url: "{{ central_base_url }}"
+        client_id: "{{ central_client_id }}"
+        client_secret: "{{ central_client_secret }}"
+      register: token_result
+
+    - set_fact:
+        oauth_token: "{{ token_result['access_token'] }}"
+
+    - name: Remove local Banner Device scope
+      arubanetworks.hpeanw_central.central_profiles:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ oauth_token }}"
+        name: profile-{{switch_serial}}
+        path: local-management
+        state: merged
+        local:
+          scope_id: "{{ switch_scope_id }}"
+          persona: "{{ switch_persona }}"
+        config_dict:
+          name: profile-{{switch_serial}}
+          banner-message: null # Setting individual values to null/None will remove them
+
+    - name: Update to Default local L2 interfaces Device scope
+      arubanetworks.hpeanw_central.central_profiles:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ oauth_token }}"
+        name: "{{item.interface}}"
+        path: "ethernet-interfaces"
+        state: merged
+        local:
+          scope_id: "{{ switch_scope_id }}"
+          persona: "{{ switch_persona }}"
+        config_dict:
+          poe:
+              enabled: True
+          enable: true
+          routing: false
+          switchport:
+              interface-mode: ACCESS
+              access-vlan: 1
+      loop: "{{interfaces}}"
+
+    - name: Unassign VLAN Library Profile from Site Scope
+      arubanetworks.hpeanw_central.central_api:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ oauth_token }}"
+        method: DELETE
+        path: "/network-config/v1alpha1/scope-maps"
+        data:
+          scope-map:
+            - scope-name: "{{ site_scope_id }}"
+              persona: "{{ switch_persona }}"
+              resource: "layer2-vlan/100"
+      register: output
+
+    - debug:
+        var: output
+
+    - name: Delete Library Vlan Config Profile
+      arubanetworks.hpeanw_central.central_profiles:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ oauth_token }}"
+        path: "layer2-vlan"
+        name: 100
+        state: deleted
+        config_dict:
+          vlan: 100
+
+

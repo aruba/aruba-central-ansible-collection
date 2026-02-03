@@ -1,0 +1,28 @@
+---
+# Example playbook for HPE Aruba Networking Central API calls
+- name: Demo HPE Aruba Networking Central API Calls
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Create OAuth Token from Central
+      arubanetworks.hpeanw_central.central_token:
+        base_url: "{{ central_base_url }}"
+        client_id: "{{ central_client_id }}"
+        client_secret: "{{ central_client_secret }}"
+      register: token_result
+      no_log: True
+
+    - set_fact:
+        oauth_token: "{{ token_result['access_token'] }}"
+      no_log: True
+
+    - name: Get devices from Central
+      arubanetworks.hpeanw_central.central_api:
+        base_url: "{{ central_base_url }}"
+        access_token: "{{ oauth_token }}"
+        method: GET
+        path: "/network-config/v1alpha1/devices"
+      register: devices_result
+
+    - debug:
+        var: devices_result

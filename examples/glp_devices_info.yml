@@ -1,0 +1,59 @@
+---
+# Example playbook for HPE GreenLake Platform API calls
+- name: Demo HPE GreenLake Platform Devices Info
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Generate Token for Session
+      arubanetworks.hpeanw_central.glp_token:
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+      register: token_result
+      no_log: True
+
+    - name: Get Devices in GLP with Token
+      arubanetworks.hpeanw_central.glp_devices_info:
+        access_token: "{{token_result['access_token']}}"
+      register: devices_result
+    
+    - debug:
+        var: devices_result
+
+    - name: Get SERIAL in GLP with Token
+      arubanetworks.hpeanw_central.glp_devices_info:
+        access_token: "{{token_result['access_token']}}"
+        subset: device_by_serial
+        serial_number: "ABC123456"
+      register: devices_result
+
+    - debug:
+        var: devices_result
+
+    - name: Get Select MAC from All Devices in GLP with Token
+      arubanetworks.hpeanw_central.glp_devices_info:
+        access_token: "{{token_result['access_token']}}"
+        select: "macAddress"
+      register: devices_result
+
+    - debug:
+        var: devices_result
+
+    - name: Get device by filter
+      arubanetworks.hpeanw_central.glp_devices_info:
+        access_token: "{{token_result['access_token']}}"
+        subset: device_by_filter
+        device_filter: "serialNumber eq 'ABC123456'"
+      register: devices_result
+
+    - debug:
+        var: devices_result
+
+    - name: Get device by ID
+      arubanetworks.hpeanw_central.glp_devices_info:
+        access_token: "{{token_result['access_token']}}"
+        subset: device_by_id
+        device_id: 111222333-444555-666777888-999000
+      register: devices_result
+
+    - debug:
+        var: devices_result

@@ -1,0 +1,22 @@
+---
+# Example playbook for HPE GreenLake Platform API calls
+- name: Demo HPE GreenLake Platform Devices Info
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Generate Token for Session
+      arubanetworks.hpeanw_central.glp_token:
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+      register: token_result
+
+    - name: Assign Devices to GLP
+      arubanetworks.hpeanw_central.glp_devices:
+        access_token: "{{token_result['access_token']}}"
+        application:
+          name: HPE Aruba Networking Central Internal
+          region: "US West"
+        subscription_key: "ED3EB30FA8A1C461A8"
+        devices:
+          - "PHQSLBN56K"
+        state: "assigned"
