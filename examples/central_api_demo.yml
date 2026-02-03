@@ -13,13 +13,13 @@
       no_log: True
 
     - set_fact:
-        oauth_token: "{{ token_result['access_token'] }}"
+        central_access_token: "{{ token_result['access_token'] }}"
       no_log: True
 
     - name: Get devices from Central
       arubanetworks.hpeanw_central.central_api:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ oauth_token }}"
+        access_token: "{{ central_access_token }}"
         method: GET
         path: "/network-config/v1alpha1/devices"
       register: devices_result

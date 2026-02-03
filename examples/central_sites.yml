@@ -13,13 +13,13 @@
       no_log: true
 
     - set_fact:
-        oauth_token: "{{ token_result['access_token'] }}"
+        central_access_token: "{{ token_result['access_token'] }}"
       no_log: true
 
     - name: Create a new Site
       arubanetworks.hpeanw_central.central_sites:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ oauth_token }}"
+        access_token: "{{ central_access_token }}"
         site_attributes:
           name: Ansible Campus
           address: "123 S St"
