@@ -87,5 +87,3 @@
         state: deleted
         config_dict:
           vlan: 100
-
-
