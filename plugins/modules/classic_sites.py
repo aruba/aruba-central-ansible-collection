@@ -16,7 +16,7 @@ short_description: Assign or Unassign Devices to a Site in HPE Aruba Networking 
 description:
   - This module allows you to assign or unassign devices to a site in HPE Aruba Networking Central.
   - It does not handle refresh token or OAuth token generation; you must provide a valid access token.
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   base_url:
@@ -89,8 +89,8 @@ result:
       returned: always
       sample: 200
     msg:
-      description: Response body
-      type: dict or str
+      description: Response body (can be dict or str depending on API response)
+      type: raw
       returned: always
     headers:
       description: Response headers
@@ -103,7 +103,6 @@ from ansible_collections.arubanetworks.hpeanw_central.plugins.module_utils._modu
     ModuleClassicConnection,
     classic_base_argument_spec,
 )
-from pycentral.classic.base import ArubaCentralBase
 from pycentral.monitoring import Sites
 import traceback
 
@@ -227,7 +226,9 @@ def main():
                     and device_site_mapping[device_serial_number] != site_name
                 ):
                     module.fail_json(
-                        msg=f"Device {device_serial_number} is already assigned to site {device_site_mapping[device_serial_number]}. Please remove the device from the site before assigning it to a new site."
+                        msg=f"Device {device_serial_number} is already assigned to site "
+                        f"{device_site_mapping[device_serial_number]}. Please remove the device "
+                        f"from the site before assigning it to a new site."
                     )
 
                 elif (
@@ -243,12 +244,13 @@ def main():
 
             elif state == "unassigned":
                 if device_site_mapping[device_serial_number] != site_name:
-                    # module.exit_json(changed=False, msg=f"Device {device_serial_number} is already unassigned from site {site_name} and current site is {device_site_mapping[device_serial_number]}.")
+                    # Already unassigned from this site
                     if device_site_mapping[device_serial_number]:
                         # Throw warning that device is assigned to different site
                         pass
                     result["msg"] += (
-                        f" Device {device_serial_number} is already unassigned from site {site_name} and current site is {device_site_mapping[device_serial_number]}."
+                        f" Device {device_serial_number} is already unassigned from site {site_name} "
+                        f"and current site is {device_site_mapping[device_serial_number]}."
                     )
                     continue
             process_devices.append(device_serial_number)
@@ -263,7 +265,8 @@ def main():
             )
             if site_unassociation_resp["code"] != 200:
                 module.fail_json(
-                    msg=f"Failed to unassociate devices {site_unassociation_resp['msg']['failed']} from site {site_name}. Error: {site_unassociation_resp['msg']}",
+                    msg=f"Failed to unassociate devices {site_unassociation_resp['msg']['failed']} "
+                    f"from site {site_name}. Error: {site_unassociation_resp['msg']}",
                     result=site_unassociation_resp,
                 )
 

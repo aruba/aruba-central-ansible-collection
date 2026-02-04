@@ -15,7 +15,7 @@ module: glp_token
 short_description: Generate OAuth Token for HPE GreenLake
 description:
   - This module allows you to generate an OAuth Token for HPE GreenLake.
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   client_id:
@@ -39,7 +39,7 @@ EXAMPLES = r"""
     no_log: True
 
 - set_fact:
-    oauth_token: "{{ token_result['access_token'] }}"
+    glp_access_token: "{{ token_result['access_token'] }}"
 """
 
 RETURN = r"""
@@ -52,13 +52,20 @@ access_token:
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.arubanetworks.hpeanw_central.plugins.module_utils._module_pycentral_base import (  # NOQA
     ModuleGLPConnection,
-    glp_base_argument_spec,
 )
 
 
 def main():
     module_args = dict(
-        **glp_base_argument_spec(),
+        client_id=dict(
+            type="str",
+            required=True,
+        ),
+        client_secret=dict(
+            type="str",
+            required=True,
+            no_log=True,
+        ),
     )
 
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=False)

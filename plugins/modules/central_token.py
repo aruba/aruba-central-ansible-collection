@@ -15,7 +15,7 @@ module: central_token
 short_description: Generate OAuth Token for HPE Aruba Networking Central
 description:
   - This module allows you to generate an OAuth Token for HPE Aruba Networking Central.
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   base_url:
@@ -25,12 +25,12 @@ options:
     required: true
   client_id:
     description: >
-      The client ID for the Central account, used to create OAuth token, required if oauth_token is not provided
+      The client ID for the Central account, used to create OAuth token
     type: str
     required: true
   client_secret:
     description: >
-      The client secret for the Central account, used to create OAuth token, required if oauth_token is not provided
+      The client secret for the Central account, used to create OAuth token
     type: str
     required: true
 """
@@ -44,7 +44,7 @@ EXAMPLES = r"""
   register: token_result
 
 - set_fact:
-    oauth_token: "{{ token_result['access_token'] }}"
+    central_access_token: "{{ token_result['access_token'] }}"
 """
 
 RETURN = r"""
@@ -57,13 +57,24 @@ access_token:
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.arubanetworks.hpeanw_central.plugins.module_utils._module_pycentral_base import (  # NOQA
     ModuleCentralConnection,
-    central_base_argument_spec,
 )
 
 
 def main():
     module_args = dict(
-        **central_base_argument_spec(),
+        base_url=dict(
+            type="str",
+            required=True,
+        ),
+        client_id=dict(
+            type="str",
+            required=True,
+        ),
+        client_secret=dict(
+            type="str",
+            required=True,
+            no_log=True,
+        ),
     )
 
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=False)

@@ -16,7 +16,7 @@ short_description: Execute generic API calls to HPE Aruba Networking Central
 description:
   - This module allows you to execute API calls to HPE Aruba Networking Central.
   - It uses the central connection plugin to handle authentication and API calls.
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   base_url:
@@ -78,7 +78,7 @@ EXAMPLES = r"""
 - name: Assign Library Profile to Scope with Token
   arubanetworks.hpeanw_central.central_api:
     base_url: https://us4.api.central.arubanetworks.com
-    access_token: "{{oauth_token}}"
+    access_token: "{{central_access_token}}"
     method: POST
     path: "/network-config/v1alpha1/scope-maps"
     data:
@@ -100,8 +100,8 @@ result:
       returned: always
       sample: 200
     msg:
-      description: Response body
-      type: dict or str
+      description: Response body (can be dict or str depending on API response)
+      type: raw
       returned: always
     headers:
       description: Response headers

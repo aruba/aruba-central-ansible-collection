@@ -28,7 +28,7 @@ client_secret:
     no_log: True
 
 - set_fact:
-    oauth_token: "{{ token_result['access_token'] }}"
+    glp_access_token: "{{ token_result['access_token'] }}"
 ```
 
 ##### RETURNED

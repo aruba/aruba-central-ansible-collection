@@ -66,8 +66,8 @@ result:
       returned: always
       sample: 200
     msg:
-      description: Response body
-      type: dict or str
+      description: Response body (can be dict or str depending on API response)
+      type: raw
       returned: always
     headers:
       description: Response headers

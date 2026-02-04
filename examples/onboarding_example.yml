@@ -37,13 +37,13 @@
       no_log: True
 
     - set_fact:
-        oauth_token: "{{ token_result['access_token'] }}"
+        central_access_token: "{{ token_result['access_token'] }}"
       no_log: True
 
     - name: Create Site Ansible_Site in Central
       arubanetworks.hpeanw_central.central_sites:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ oauth_token }}"
+        access_token: "{{ central_access_token }}"
         site_attributes:
           name: "{{ site_name }}"
           address: "123 Main St"
@@ -89,7 +89,7 @@
     - name: Assign Device Functions/Personas in HPE Aruba Networking Central
       arubanetworks.hpeanw_central.central_api:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ oauth_token }}"
+        access_token: "{{ central_access_token }}"
         method: POST
         path: "/network-config/v1alpha1/persona-assignment"
         data:

@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 # (C) Copyright 2025 HPE Aruba Networking
 # GNU General Public License v3.0+
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -16,7 +13,7 @@ description:
   - Reads inventory from HPE Aruba Networking Central
   - Dynamically creates groups based on device attributes
   - Supports grouping by site, device type, model, and more
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   plugin:

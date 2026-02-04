@@ -16,7 +16,7 @@ short_description: Assign or Unassign Devices to a Site in HPE Aruba Networking 
 description:
   - This module allows you to assign or unassign devices to a site in HPE Aruba Networking Central.
   - It does not handle refresh token or OAuth token generation; you must provide a valid access token.
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   base_url:
@@ -43,17 +43,15 @@ options:
     description: >
       The type of devices to assign or unassign (e.g., ACCESS_POINT, SWITCH, GATEWAY)
     type: str
-    required: false
+    required: true
     choices: ['ACCESS_POINT', 'SWITCH', 'GATEWAY']
-    default: "ACCESS_POINT"
   devices:
     description: >
       List of device serial numbers to assign or unassign to the device group,
       state must be set to 'assigned' or 'unassigned'. All devices must be of the same type.
     type: list
     elements: str
-    required: false
-    default: []
+    required: true
   state:
     description: >
       Desired state of the group whether it should be merged, deleted, or devices assigned/unassigned.
@@ -69,75 +67,75 @@ options:
 
 EXAMPLES = r"""
 - name: Create a device group
-    arubanetworks.hpeanw_central.classic_groups:
-        base_url: "{{ classic_base_url }}"
-        access_token: "{{ classic_access_token }}"
-        group_name: "Chicago-Campus"
-        group_attributes:
-          template_info:
-            Wired: false
-          group_properties:
-            AllowedDevTypes:
-              - AccessPoints
-              - Gateways
-              - Switches
-            Architecture: AOS10
-            ApNetworkRole: Standard
-            GwNetworkRole: BranchGateway
-            AllowedSwitchTypes:
-              - AOS_CX
-            NewCentral: true
-        device_type: "ACCESS_POINT"
-        devices: []
-        state: merged
+  arubanetworks.hpeanw_central.classic_groups:
+    base_url: "{{ classic_base_url }}"
+    access_token: "{{ classic_access_token }}"
+    group_name: "Chicago-Campus"
+    group_attributes:
+      template_info:
+        Wired: false
+      group_properties:
+        AllowedDevTypes:
+          - AccessPoints
+          - Gateways
+          - Switches
+        Architecture: AOS10
+        ApNetworkRole: Standard
+        GwNetworkRole: BranchGateway
+        AllowedSwitchTypes:
+          - AOS_CX
+        NewCentral: true
+    device_type: "ACCESS_POINT"
+    devices: []
+    state: merged
 
 - name: Create a device group for Switches
-    arubanetworks.hpeanw_central.classic_groups:
-        base_url: "{{ classic_base_url }}"
-        access_token: "{{ classic_access_token }}"
-        group_name: "Fabric2-Switches"
-        group_attributes:
-          template_info:
-            Wired: false
-          group_properties:
-            AllowedDevTypes:
-              - Switches
-            AllowedSwitchTypes:
-              - AOS_CX
-            NewCentral: true
-        device_type: "SWITCH"
-        devices: []
-        state: merged
+  arubanetworks.hpeanw_central.classic_groups:
+    base_url: "{{ classic_base_url }}"
+    access_token: "{{ classic_access_token }}"
+    group_name: "Fabric2-Switches"
+    group_attributes:
+      template_info:
+        Wired: false
+      group_properties:
+        AllowedDevTypes:
+          - Switches
+        AllowedSwitchTypes:
+          - AOS_CX
+        NewCentral: true
+    device_type: "SWITCH"
+    devices: []
+    state: merged
 
 - name: Assign devices to a group
-    arubanetworks.hpeanw_central.classic_groups:
-        base_url: "{{ classic_base_url }}"
-        access_token: "{{ classic_access_token }}"
-        group_name: "MyDeviceGroup"
-        device_type: "SWITCH"
-        devices:
-            - "ABC1234567"
-            - "XYZ9876543"
-        state: assigned
+  arubanetworks.hpeanw_central.classic_groups:
+    base_url: "{{ classic_base_url }}"
+    access_token: "{{ classic_access_token }}"
+    group_name: "MyDeviceGroup"
+    device_type: "SWITCH"
+    devices:
+      - "ABC1234567"
+      - "XYZ9876543"
+    state: assigned
 
 - name: Unassign devices from a group
-    arubanetworks.hpeanw_central.classic_groups:
-        base_url: "{{ classic_base_url }}"
-        access_token: "{{ classic_access_token }}"
-        group_name: "MyDeviceGroup"
-        device_type: "GATEWAY"
-        devices:
-            - "ABC1234567"
-            - "XYZ9876543"
-        state: unassigned
+  arubanetworks.hpeanw_central.classic_groups:
+    base_url: "{{ classic_base_url }}"
+    access_token: "{{ classic_access_token }}"
+    group_name: "MyDeviceGroup"
+    device_type: "GATEWAY"
+    devices:
+      - "ABC1234567"
+      - "XYZ9876543"
+    state: unassigned
 
 - name: Delete a device group
-    arubanetworks.hpeanw_central.classic_groups:
-        base_url: "{{ classic_base_url }}"
-        access_token: "{{ classic_access_token }}"
-        group_name: "MyDeviceGroup"
-        device_type: "ACCESS_POINT"
-        state: deleted
+  arubanetworks.hpeanw_central.classic_groups:
+    base_url: "{{ classic_base_url }}"
+    access_token: "{{ classic_access_token }}"
+    group_name: "MyDeviceGroup"
+    device_type: "ACCESS_POINT"
+    state: deleted
 """
 
 RETURN = r"""
@@ -152,8 +150,8 @@ result:
       returned: always
       sample: 200
     msg:
-      description: Response body
-      type: dict or str
+      description: Response body (can be dict or str depending on API response)
+      type: raw
       returned: always
     headers:
       description: Response headers
@@ -166,7 +164,6 @@ from ansible_collections.arubanetworks.hpeanw_central.plugins.module_utils._modu
     ModuleClassicConnection,
     classic_base_argument_spec,
 )
-from pycentral.classic.base import ArubaCentralBase
 import traceback
 
 # Classic API Endpoints to gather device information
@@ -270,7 +267,7 @@ def main():
 
         if device_group_resp["code"] != 200:
             module.fail_json(
-                msg=f"Failed to retrieve device groups",
+                msg="Failed to retrieve device groups",
                 result=device_group_resp,
             )
 
@@ -341,12 +338,13 @@ def main():
 
             elif state == "unassigned":
                 if device_group_mapping[device_serial_number] != group_name:
-                    # module.exit_json(changed=False, msg=f"Device {device_serial_number} is already unassigned from group {group_name} and current group is {device_group_mapping[device_serial_number]}.")
+                    # Already unassigned from this group
                     if device_group_mapping[device_serial_number]:
                         # Throw warning that device is assigned to different group
                         pass
                     result["msg"] += (
-                        f" Device {device_serial_number} is already unassigned from group {group_name} and current group is {device_group_mapping[device_serial_number]}."
+                        f" Device {device_serial_number} is already unassigned from group {group_name} "
+                        f"and current group is {device_group_mapping[device_serial_number]}."
                     )
                     continue
 

@@ -16,7 +16,7 @@ short_description: Retrieve Device(s) information in HPE Aruba Networking Centra
 description:
   - This module allows you to retrieve Device(s) in HPE Aruba Networking Central.
   - Provides various subsets to fetch different types of device information.
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   base_url:
@@ -64,7 +64,7 @@ options:
     description: >
       Filter expression for retrieving specific devices when using device_by_filter subset
     type: str
-    required: false       
+    required: false
 """
 
 EXAMPLES = r"""
@@ -105,7 +105,7 @@ EXAMPLES = r"""
     access_token: AABBCC-111222-333444-555666777888
     subset: device_by_filter
     device_filter: "deviceType eq SWITCH"
-  register: devices_result  
+  register: devices_result
 """
 
 RETURN = r"""

@@ -16,7 +16,7 @@ short_description: Retrieve Device Group(s) information in HPE Aruba Networking 
 description:
   - This module allows you to retrieve Device Group(s) in HPE Aruba Networking Central.
   - Provides various subsets to fetch different types of device group information.
-author: "HPE Aruba Networking"
+author: Ti Chiapuzio-Wong (@tchiapuziowong)
 version_added: "1.0.0"
 options:
   base_url:

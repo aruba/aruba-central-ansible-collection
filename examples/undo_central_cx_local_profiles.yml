@@ -26,12 +26,12 @@
       register: token_result
 
     - set_fact:
-        oauth_token: "{{ token_result['access_token'] }}"
+        central_access_token: "{{ token_result['access_token'] }}"
 
     - name: Remove local Banner Device scope
       arubanetworks.hpeanw_central.central_profiles:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ oauth_token }}"
+        access_token: "{{ central_access_token }}"
         name: profile-{{switch_serial}}
         path: local-management
         state: merged
@@ -45,7 +45,7 @@
     - name: Update to Default local L2 interfaces Device scope
       arubanetworks.hpeanw_central.central_profiles:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ oauth_token }}"
+        access_token: "{{ central_access_token }}"
         name: "{{item.interface}}"
         path: "ethernet-interfaces"
         state: merged
@@ -65,7 +65,7 @@
     - name: Unassign VLAN Library Profile from Site Scope
       arubanetworks.hpeanw_central.central_api:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ oauth_token }}"
+        access_token: "{{ central_access_token }}"
         method: DELETE
         path: "/network-config/v1alpha1/scope-maps"
         data:
@@ -81,11 +81,9 @@
     - name: Delete Library Vlan Config Profile
       arubanetworks.hpeanw_central.central_profiles:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ oauth_token }}"
+        access_token: "{{ central_access_token }}"
         path: "layer2-vlan"
         name: 100
         state: deleted
         config_dict:
           vlan: 100
-
-

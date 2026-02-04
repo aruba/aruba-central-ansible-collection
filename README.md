@@ -59,13 +59,13 @@ For each platform (except classic Central), it is recommended to use the `<platf
       no_log: True
 
     - set_fact:
-        oauth_token: "{{ token_result['access_token'] }}"
+        central_access_token: "{{ token_result['access_token'] }}"
       no_log: True
 
     - name: Create a new Library VLAN profile with generated token
       arubanetworks.hpeanw_central.central_profiles:
         base_url: https://us4.api.central.arubanetworks.com
-        access_token: "{{ oauth_token }}"
+        access_token: "{{ central_access_token }}"
         name: 100
         path: "layer2-vlan"
         config_dict:

@@ -93,7 +93,7 @@ def classic_base_argument_spec():
         ),
         access_token=dict(
             type="str",
-            default=None,
+            required=True,
             no_log=True,
         ),
     )
