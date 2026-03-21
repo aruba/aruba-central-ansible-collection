@@ -68,7 +68,7 @@ def main():
         ),
     )
 
-    module = AnsibleModule(argument_spec=module_args, supports_check_mode=False)
+    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
 
     try:
         glp_obj = ModuleGLPConnection(module)

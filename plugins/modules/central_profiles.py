@@ -275,7 +275,7 @@ def main():
         ),
     )
 
-    module = AnsibleModule(argument_spec=module_args, supports_check_mode=False)
+    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
 
     path = module.params["path"]
     config = module.params["config_dict"]
@@ -338,6 +338,83 @@ def main():
                 msg=err_msg,
                 result=result,
             )
+
+        # Check mode implementation
+        if module.check_mode:
+            result = {"code": 200, "msg": {}, "headers": {}}
+
+            # Use Create when resource does not exist
+            if (
+                state == "merged"
+                and not get_success
+                or (state == "merged" and get_success and not existing_obj_dict)
+            ):
+                modified = True
+                result["msg"]["message"] = "New profile would be created"
+                result["diff"] = {"before": {}, "after": config}
+
+            # Use Update instead of Create if resource already exists
+            elif state == "merged" and get_success and existing_obj_dict:
+                # Compare existing config with desired config to show diff
+                diff_found = False
+                before_config = existing_obj_dict.copy()
+                after_config = before_config.copy()
+
+                for key, value in config.items():
+                    if (
+                        key not in existing_obj_dict
+                        or existing_obj_dict[key] != value
+                    ):
+                        diff_found = True
+                        after_config[key] = value
+
+                if diff_found:
+                    modified = True
+                    result["msg"]["message"] = (
+                        "Existing profile would be updated"
+                    )
+                    result["diff"] = {
+                        "before": before_config,
+                        "after": after_config,
+                    }
+                else:
+                    modified = False
+                    result["msg"]["message"] = (
+                        "No changes needed - profile matches desired state"
+                    )
+
+            elif state == "replaced":
+                if get_success and existing_obj_dict:
+                    modified = True
+                    result["msg"]["message"] = (
+                        "Existing profile would be replaced (delete and recreate)"
+                    )
+                    result["diff"] = {
+                        "before": existing_obj_dict,
+                        "after": config,
+                    }
+                else:
+                    modified = True
+                    result["msg"]["message"] = "New profile would be created"
+                    result["diff"] = {"before": {}, "after": config}
+
+            elif state == "deleted":
+                if get_success and existing_obj_dict:
+                    modified = True
+                    result["msg"]["message"] = "Profile would be deleted"
+                    result["diff"] = {"before": existing_obj_dict, "after": {}}
+                else:
+                    modified = False
+                    result["msg"]["message"] = (
+                        "Profile does not exist - no deletion needed"
+                    )
+
+            module.exit_json(
+                msg="Check mode: No changes made",
+                changed=modified,
+                result=result,
+            )
+
         # Retry logic for 409 conflicts
         max_retries = 30
         # Total 3 seconds divided into 30 loops

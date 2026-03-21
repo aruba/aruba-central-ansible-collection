@@ -151,7 +151,7 @@ def main():
     )
 
     # Initialize the Ansible module with argument spec
-    module = AnsibleModule(argument_spec=module_args, supports_check_mode=False)
+    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
 
     # Extract module parameters
     subset = module.params["subset"]

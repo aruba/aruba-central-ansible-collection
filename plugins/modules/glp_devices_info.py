@@ -150,7 +150,7 @@ def main():
         serial_number=dict(type="str", required=False),
     )
 
-    module = AnsibleModule(argument_spec=module_args, supports_check_mode=False)
+    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
 
     subset = module.params["subset"]
     device_filter = module.params["device_filter"]
