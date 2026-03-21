@@ -5,7 +5,7 @@ namespace: arubanetworks
 name: hpeanw_central
 
 # The version of the collection. Must be compatible with semantic versioning
-version: 1.0.0
+version: 2.0b0
 
 readme: README.md
 
