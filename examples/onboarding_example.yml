@@ -16,6 +16,16 @@
       register: token_result
       no_log: True
 
+    - name: Add Devices to GLP Inventory
+      arubanetworks.hpeanw_central.glp_inventory:
+        access_token: "{{token_result['access_token']}}"
+        devices:
+          - serial_number: PHQSL1116K
+            mac_address: 8c:85:cc:55:c0:81
+          - serial_number: PHQSL222HB
+            mac_address: 8c:00:c1:44:4c:40          
+        state: "merged"
+
     - name: Assign Devices to GLP & Assign subscriptions
       arubanetworks.hpeanw_central.glp_devices:
         access_token: "{{token_result['access_token']}}"
