@@ -21,8 +21,8 @@ license_file: 'LICENSE.txt'
 
 tags: ['aruba', 'hpe', 'central', 'greenlake', 'networking', 'cloud', 'inventory', 'api']
 
-repository: https://github.com/aruba/aruba-central-ansible-collection
+repository: https://github.com/aruba/aruba-central-ansible-collection/tree/v2-beta
 
-documentation: https://github.com/aruba/aruba-central-ansible-collection/tree/main/docs
+documentation: https://github.com/aruba/aruba-central-ansible-collection/tree/v2-beta/docs
 
 issues: https://github.com/aruba/aruba-central-ansible-collection/issues
