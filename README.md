@@ -18,9 +18,15 @@ This Ansible collection provides modules and plugins to interact with [HPE Aruba
 
 
 ## Installation
-The bundled version of the collection is provided within the repository itself and can be installed through the following command:
+The beta version of the collection is provided within Ansible Galaxy and can be installed through the following command:
 ```bash
-ansible-galaxy collection install arubanetworks-hpeanw_central-1.0.0.tar.gz -f
+ansible-galaxy collection install arubanetworks.hpeanw_central
+```
+  
+  
+Additionally, the bundled version of the collection is provided within the repository itself and can be installed through the following command:
+```bash
+ansible-galaxy collection install arubanetworks-hpeanw_central-2.0.0-beta.tar.gz -f
 ```
 
 ## Authentication
