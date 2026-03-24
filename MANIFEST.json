@@ -2,7 +2,7 @@
  "collection_info": {
   "namespace": "arubanetworks",
   "name": "aruba_central",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "authors": [
    "Jay Pathak",
    "Ti Chiapuzio-Wong"
@@ -19,7 +19,7 @@
    "arubacentral",
    "esp"
   ],
-  "description": "The Aruba Central Ansible Collection comprises of modules and plugins to establish connection to Aruba Central and build automation workflows using REST API.",
+  "description": "This deprecated version of the HPE Aruba Networking Central Ansible Collection comprises of modules and plugins to establish connection to Classic Aruba Central and build automation workflows using REST API.",
   "license": [
    "GPL-3.0-or-later"
   ],
