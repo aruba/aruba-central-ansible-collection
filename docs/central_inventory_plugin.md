@@ -8,7 +8,7 @@ The `central_inventory` plugin is an Ansible dynamic inventory plugin that autom
 
 The plugin connects to HPE Aruba Networking Central's API and:
 
-1. **Fetches all network devices** from your Central account
+1. **Fetches all network devices** from your Central account ([token_only option](#token-only-mode) can skip this step and only refresh the token in the output YAML).
 2. **Organizes devices into logical groups** based on attributes like:
    - Site location
    - Device type (Switch, Gateway, Access Point)
@@ -64,6 +64,7 @@ filters:
 
 # Export to static file
 output_file: /path/to/central_devices_inventory.yml
+token_only: true  # Optional: refresh token only, skip device discovery
 
 # Custom host variables using Jinja2
 compose:
@@ -89,10 +90,15 @@ keyed_groups:
    - OAuth with `central_client_id` and `central_client_secret`
 3. **Token Storage**: The active token is stored in the output file for subsequent runs
 
+### Token-Only Mode
+
+Set `token_only: true` with `output_file` to skip device retrieval and inventory/group generation.
+In this mode, the plugin updates only `all.vars.central_access_token` in the YAML file and preserves all other content.
+
 ### Device Discovery
 
 1. Connects to Central's Monitoring API
-2. Fetches all devices using `MonitoringDevices.get_all_device_inventory()`
+2. Fetches all devices in Central's device inventory using [`MonitoringDevices.get_all_device_inventory()`](https://pycentral.readthedocs.io/en/v2/modules/new_monitoring/#pycentral.new_monitoring.devices.MonitoringDevices.get_all_device_inventory)
 3. Applies any configured filters
 4. Creates inventory groups based on device attributes
 5. Assigns devices to appropriate groups

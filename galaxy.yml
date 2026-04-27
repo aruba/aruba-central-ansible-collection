@@ -1,10 +1,8 @@
 #SPDX-License-Identifier: MIT-0
 namespace: arubanetworks
 
-# The name of the collection. Has the same character restrictions as 'namespace'
 name: hpeanw_central
 
-# The version of the collection. Must be compatible with semantic versioning
 version: 2.0.0-beta
 
 readme: README.md
@@ -15,9 +13,7 @@ authors:
 description: A collection of Ansible modules and plugins for HPE Aruba Networking Central and HPE GreenLake Platform APIs.
 
 license:
-- GPL-2.0-or-later
-
-license_file: 'LICENSE.txt'
+- GPL-3.0-or-later
 
 tags: ['aruba', 'hpe', 'central', 'greenlake', 'networking', 'cloud', 'inventory', 'api']
 
