@@ -41,7 +41,6 @@ class CentralClient:
         if self.client_id and self.client_secret:
             token_info["new_central"]["client_id"] = self.client_id
             token_info["new_central"]["client_secret"] = self.client_secret
-            token_info["new_central"]["access_token"] = None
         # If OAuth token is provided, use it directly
         if self.access_token:
             # self.logger.info("Using provided OAuth token")
