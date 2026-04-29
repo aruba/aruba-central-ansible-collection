@@ -125,7 +125,7 @@ EXAMPLES = r"""
     subset: device_by_filter
     device_filters:
       inventory_filter: "isProvisioned eq Yes and siteName eq Ansible-Campus"
-      monitoring_filter: "siteName eq Ansible-Campus"       
+      monitoring_filter: "siteName eq Ansible-Campus"
   register: devices_result
 """
 
