@@ -26,7 +26,7 @@ ansible-galaxy collection install arubanetworks.hpeanw_central
   
 Additionally, the bundled version of the collection is provided within the repository itself and can be installed through the following command:
 ```bash
-ansible-galaxy collection install arubanetworks-hpeanw_central-2.<version>-beta.tar.gz -f
+ansible-galaxy collection install arubanetworks-hpeanw_central-2.0.0-beta.tar.gz -f
 ```
 
 ## Authentication
