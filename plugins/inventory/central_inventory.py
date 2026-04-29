@@ -200,6 +200,7 @@ import os
 try:
     from pycentral import NewCentralBase
     from pycentral.new_monitoring import MonitoringDevices
+    from pycentral.scopes import Scopes
 
     HAS_PYCENTRAL = True
 except ImportError:
@@ -302,6 +303,44 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             return central
         except Exception as e:
             raise ConnectionError(f"Failed to connect to Central: {str(e)}")
+
+    def _get_sites_dict(self, scopes):
+        """
+        Fetch all sites and return as a dictionary keyed by site name
+
+        :param scopes: Scopes object
+        :return: Dictionary of {site_name: {"name": site_name, "scope_id": scope_id}}
+        """
+        try:
+            sites_dict = {}
+            for site in scopes.sites:
+                sites_dict[str(site.name)] = {
+                    "name": str(site.name),
+                    "scope_id": str(site.id),
+                }
+            return sites_dict
+        except Exception as e:
+            self.display.warning(f"Failed to fetch sites: {str(e)}")
+            return {}
+
+    def _get_groups_dict(self, scopes):
+        """
+        Fetch all device groups and return as a dictionary keyed by group name
+
+        :param scopes: Scopes object
+        :return: Dictionary of {group_name: {"name": group_name, "scope_id": scope_id}}
+        """
+        try:
+            groups_dict = {}
+            for group in scopes.device_groups:
+                groups_dict[str(group.name)] = {
+                    "name": str(group.name),
+                    "scope_id": str(group.id),
+                }
+            return groups_dict
+        except Exception as e:
+            self.display.warning(f"Failed to fetch device groups: {str(e)}")
+            return {}
 
     def _get_devices(self, central):
         """
@@ -438,6 +477,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                     "central_client_secret",
                     str(token_info["client_secret"]),
                 )
+
+        scopes = Scopes(central)
+
+        # Set central_sites_dict and central_groups_dict at the 'all' group level
+        self.inventory.set_variable(
+            "all", "central_sites_dict", self._get_sites_dict(scopes)
+        )
+        self.inventory.set_variable(
+            "all", "central_groups_dict", self._get_groups_dict(scopes)
+        )
 
         for device in devices:
             # Use serial number or ID as the hostname
@@ -631,19 +680,36 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         if not output_file:
             return
 
+        # Read existing all.vars from output file so pre-existing entries are preserved
+        existing_all_vars = {}
+        if os.path.exists(output_file):
+            try:
+                with open(output_file, "r") as f:
+                    existing_data = yaml.safe_load(f) or {}
+                if isinstance(existing_data.get("all"), dict) and isinstance(
+                    existing_data["all"].get("vars"), dict
+                ):
+                    existing_all_vars = existing_data["all"]["vars"]
+            except Exception as e:
+                self.display.vvv(
+                    f"Could not read existing vars from {output_file}: {str(e)}"
+                )
+
         # Build inventory dictionary
         inventory_dict = {"all": {"hosts": {}, "children": {}}}
 
-        # Get variables set at the 'all' group level
+        # Merge vars: start with existing file content, then overlay with
+        # current-run values so nothing already in the file is lost
+        merged_vars = dict(existing_all_vars)
         if "all" in self.inventory.groups:
             all_group = self.inventory.groups["all"]
             all_group_vars = all_group.get_vars()
-            # Filter out host-specific vars and only keep group-level vars
             if all_group_vars:
-                inventory_dict["all"]["vars"] = {
-                    self._sanitize_key(k): self._sanitize_value(v)
-                    for k, v in all_group_vars.items()
-                }
+                for k, v in all_group_vars.items():
+                    merged_vars[self._sanitize_key(k)] = self._sanitize_value(v)
+
+        if merged_vars:
+            inventory_dict["all"]["vars"] = merged_vars
 
         # Get all hosts
         for host_name in self.inventory.hosts:
@@ -656,7 +722,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             filtered_vars = {
                 self._sanitize_key(k): self._sanitize_value(v)
                 for k, v in host_vars.items()
-                if k not in ("inventory_file", "inventory_dir")
+                if k
+                not in (
+                    "inventory_file",
+                    "inventory_dir",
+                    "central_sites_dict",
+                    "central_groups_dict",
+                )
             }
             inventory_dict["all"]["hosts"][host_name] = filtered_vars
 
@@ -685,6 +757,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                         "central_access_token",
                         "central_client_id",
                         "central_client_secret",
+                        "central_sites_dict",
+                        "central_groups_dict",
                     )
                 }
                 group_hosts[host.name] = filtered_vars
