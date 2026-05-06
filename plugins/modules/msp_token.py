@@ -30,7 +30,6 @@ options:
       The client secret for the MSP workspace ID, used to create OAuth token
     type: str
     required: true
-    no_log: true
   workspace_id:
     description: >
       The GreenLake workspace ID associated with the MSP workspace
@@ -57,7 +56,6 @@ EXAMPLES = r"""
     client_secret: 888777666555444333222111
     workspace_id: workspace-abc-123
   register: token_result
-  no_log: true
 
 - set_fact:
     msp_access_token: "{{ token_result['msp_access_token'] }}"
@@ -69,7 +67,6 @@ EXAMPLES = r"""
     workspace_id: workspace-abc-123
     tenant_id: tenant-abc-123
   register: tenant_token_result
-  no_log: true
 
 - name: Create tenant-scoped OAuth Token by tenant name
   arubanetworks.hpeanw_central.msp_token:
@@ -78,13 +75,12 @@ EXAMPLES = r"""
     workspace_id: workspace-abc-123
     tenant_name: MyTenant
   register: tenant_token_result
-  no_log: true
 
 - set_fact:
     tenant_access_token: "{{ tenant_token_result['tenant_access_token'] }}"
 
 - set_fact:
-    msp_access_token: "{{ tenant_token_result['msp_access_token'] }}"    
+    msp_access_token: "{{ tenant_token_result['msp_access_token'] }}"
 """
 
 RETURN = r"""
@@ -95,7 +91,7 @@ msp_access_token:
 tenant_access_token:
   description: OAuth Token generated for the MSP workspace or tenant
   type: str
-  returned: success  
+  returned: success
 """
 
 from ansible.module_utils.basic import AnsibleModule

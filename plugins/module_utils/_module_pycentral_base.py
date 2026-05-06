@@ -95,10 +95,6 @@ def msp_base_argument_spec():
     This returns a dictionary that can be used as the baseline to enable MSP functionality in modules
     """
     return dict(
-        base_url=dict(
-            type="str",
-            required=False,
-        ),
         client_id=dict(
             type="str",
             required=True,
@@ -106,11 +102,6 @@ def msp_base_argument_spec():
         client_secret=dict(
             type="str",
             required=True,
-            no_log=True,
-        ),
-        access_token=dict(
-            type="str",
-            default=None,
             no_log=True,
         ),
         workspace_id=dict(
