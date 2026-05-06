@@ -222,6 +222,18 @@ def main():
         site_name = site_attributes["name"]
         site_object = scopes.find_site(site_names=site_name)
 
+    except Exception as e:
+        error_msg = str(e)
+        # Continue if sites haven't been created yet
+        if (
+            "Failed to fetch sites from Central" in error_msg
+            and "Sites are a required construct" in error_msg
+        ):
+            site_object = None
+        else:
+            module.fail_json(msg=f"Failed to retrieve site {site_name}: {e}")
+
+    try:
         # Handle site creation or update (merged state)
         if state == "merged":
             # Check if a site with this name already exists
