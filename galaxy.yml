@@ -3,7 +3,7 @@ namespace: arubanetworks
 
 name: hpeanw_central
 
-version: 2.1.0-beta
+version: 2.1.1-beta
 
 readme: README.md
 

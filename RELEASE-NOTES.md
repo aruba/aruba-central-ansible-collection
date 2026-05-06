@@ -1,6 +1,17 @@
 # Release Notes
 
-## Version 2.1.0
+## Version 2.1.1-beta
+
+### Overview
+Version 2.1.1-beta fixes a bug regarding GreenLake Platform connection.
+
+### Bug Fixes & Improvements
+- Fixed default access_token assignment in GLPClient
+
+---
+
+
+## Version 2.1.0-beta
 
 ### Overview
 Version 2.1.0 introduces new modules for enhanced GreenLake Platform capabilities, significant improvements to device and inventory management, and better troubleshooting support.
@@ -32,7 +43,7 @@ Version 2.1.0 introduces new modules for enhanced GreenLake Platform capabilitie
 
 ---
 
-## Version 2.0.0
+## Version 2.0.0-beta
 
 ### Release Date
 April 2026
