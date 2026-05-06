@@ -415,7 +415,7 @@ def main():
         if not process_devices:
             module.exit_json(
                 changed=False,
-                msg=f"Devices {devices} already assigned to group {group_name}.",
+                msg=f"Devices {devices} already {state} to/from group {group_name}.",
             )
 
     except Exception as e:

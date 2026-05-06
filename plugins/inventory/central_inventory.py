@@ -13,8 +13,9 @@ description:
   - Reads inventory from HPE Aruba Networking Central
   - Dynamically creates groups based on device attributes
   - Supports grouping by site, device type, model, and more
+  - Refreshes access tokens and can store them in the inventory file for reuse
 author: Ti Chiapuzio-Wong (@tchiapuziowong)
-version_added: "1.0.0"
+version_added: "2.0.0"
 options:
   plugin:
     description: Name of the plugin
@@ -27,7 +28,7 @@ options:
     type: str
     required: true
     env:
-      - name: ARUBA_CENTRAL_BASE_URL
+      - name: CENTRAL_BASE_URL
   central_client_id:
     description:
       - The client ID for the Central account
@@ -35,7 +36,7 @@ options:
     type: str
     required: false
     env:
-      - name: ARUBA_CENTRAL_CLIENT_ID
+      - name: CENTRAL_CLIENT_ID
   central_client_secret:
     description:
       - The client secret for the Central account
@@ -43,7 +44,7 @@ options:
     type: str
     required: false
     env:
-      - name: ARUBA_CENTRAL_CLIENT_SECRET
+      - name: CENTRAL_CLIENT_SECRET
   central_access_token:
     description:
       - A generated OAuth token for authenticating API requests
@@ -51,7 +52,7 @@ options:
     type: str
     required: false
     env:
-      - name: ARUBA_CENTRAL_ACCESS_TOKEN
+      - name: CENTRAL_ACCESS_TOKEN
   groups:
     description:
       - List of groups to create in inventory
@@ -102,6 +103,13 @@ options:
       - Automatically sets inventory_file, inventory_dir, and central_* variables at the 'all' group level
     type: str
     required: false
+  token_only:
+    description:
+      - If true, generate a fresh Central access token and write only that token to output_file
+      - Skips device retrieval and inventory/group generation
+      - Preserves the existing YAML content and only updates all.vars.central_access_token
+    type: bool
+    default: false
   separator:
     description:
       - Separator to use in group names when using keyed_groups
@@ -123,6 +131,14 @@ central_client_secret: your_client_secret
 plugin: arubanetworks.hpeanw_central.central_inventory
 central_base_url: https://us4.api.central.arubanetworks.com
 central_access_token: your_access_token
+
+# Example token-only mode (generate new token and update output file token)
+plugin: arubanetworks.hpeanw_central.central_inventory
+central_base_url: https://us4.api.central.arubanetworks.com
+central_client_id: your_client_id
+central_client_secret: your_client_secret
+output_file: /path/to/central_devices_inventory.yml
+token_only: true
 
 # Example with custom grouping
 plugin: arubanetworks.hpeanw_central.central_inventory
@@ -184,6 +200,7 @@ import os
 try:
     from pycentral import NewCentralBase
     from pycentral.new_monitoring import MonitoringDevices
+    from pycentral.scopes import Scopes
 
     HAS_PYCENTRAL = True
 except ImportError:
@@ -266,18 +283,64 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
             token_info = central.token_info["new_central"]
 
+            env_client_id = os.environ.get("CENTRAL_CLIENT_ID")
+            env_client_secret = os.environ.get("CENTRAL_CLIENT_SECRET")
+
             # Update environment variable with new access token
             if (
                 "access_token" in token_info
-                and os.environ.get("ARUBA_CENTRAL_CLIENT_ID")
-                and os.environ.get("ARUBA_CENTRAL_CLIENT_SECRET")
+                and env_client_id
+                and env_client_secret
             ):
-                os.environ["ARUBA_CENTRAL_ACCESS_TOKEN"] = token_info[
-                    "access_token"
-                ]
+                self.display.vvv(
+                    f"environment variable CENTRAL_ACCESS_TOKEN SET to {token_info['access_token'][:4]}...{token_info['access_token'][-4:]}"
+                )
+                os.environ["CENTRAL_ACCESS_TOKEN"] = token_info["access_token"]
+            else:
+                self.display.vvv(
+                    f"NO environment variable found for {env_client_id} and {env_client_secret}, skipping setting CENTRAL_ACCESS_TOKEN environment variable"
+                )
             return central
         except Exception as e:
             raise ConnectionError(f"Failed to connect to Central: {str(e)}")
+
+    def _get_sites_dict(self, scopes):
+        """
+        Fetch all sites and return as a dictionary keyed by site name
+
+        :param scopes: Scopes object
+        :return: Dictionary of {site_name: {"name": site_name, "scope_id": scope_id}}
+        """
+        try:
+            sites_dict = {}
+            for site in scopes.sites:
+                sites_dict[str(site.name)] = {
+                    "name": str(site.name),
+                    "scope_id": str(site.id),
+                }
+            return sites_dict
+        except Exception as e:
+            self.display.warning(f"Failed to fetch sites: {str(e)}")
+            return {}
+
+    def _get_groups_dict(self, scopes):
+        """
+        Fetch all device groups and return as a dictionary keyed by group name
+
+        :param scopes: Scopes object
+        :return: Dictionary of {group_name: {"name": group_name, "scope_id": scope_id}}
+        """
+        try:
+            groups_dict = {}
+            for group in scopes.device_groups:
+                groups_dict[str(group.name)] = {
+                    "name": str(group.name),
+                    "scope_id": str(group.id),
+                }
+            return groups_dict
+        except Exception as e:
+            self.display.warning(f"Failed to fetch device groups: {str(e)}")
+            return {}
 
     def _get_devices(self, central):
         """
@@ -414,6 +477,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                     "central_client_secret",
                     str(token_info["client_secret"]),
                 )
+
+        scopes = Scopes(central)
+
+        # Set central_sites_dict and central_groups_dict at the 'all' group level
+        self.inventory.set_variable(
+            "all", "central_sites_dict", self._get_sites_dict(scopes)
+        )
+        self.inventory.set_variable(
+            "all", "central_groups_dict", self._get_groups_dict(scopes)
+        )
 
         for device in devices:
             # Use serial number or ID as the hostname
@@ -607,19 +680,36 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         if not output_file:
             return
 
+        # Read existing all.vars from output file so pre-existing entries are preserved
+        existing_all_vars = {}
+        if os.path.exists(output_file):
+            try:
+                with open(output_file, "r") as f:
+                    existing_data = yaml.safe_load(f) or {}
+                if isinstance(existing_data.get("all"), dict) and isinstance(
+                    existing_data["all"].get("vars"), dict
+                ):
+                    existing_all_vars = existing_data["all"]["vars"]
+            except Exception as e:
+                self.display.vvv(
+                    f"Could not read existing vars from {output_file}: {str(e)}"
+                )
+
         # Build inventory dictionary
         inventory_dict = {"all": {"hosts": {}, "children": {}}}
 
-        # Get variables set at the 'all' group level
+        # Merge vars: start with existing file content, then overlay with
+        # current-run values so nothing already in the file is lost
+        merged_vars = dict(existing_all_vars)
         if "all" in self.inventory.groups:
             all_group = self.inventory.groups["all"]
             all_group_vars = all_group.get_vars()
-            # Filter out host-specific vars and only keep group-level vars
             if all_group_vars:
-                inventory_dict["all"]["vars"] = {
-                    self._sanitize_key(k): self._sanitize_value(v)
-                    for k, v in all_group_vars.items()
-                }
+                for k, v in all_group_vars.items():
+                    merged_vars[self._sanitize_key(k)] = self._sanitize_value(v)
+
+        if merged_vars:
+            inventory_dict["all"]["vars"] = merged_vars
 
         # Get all hosts
         for host_name in self.inventory.hosts:
@@ -632,7 +722,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             filtered_vars = {
                 self._sanitize_key(k): self._sanitize_value(v)
                 for k, v in host_vars.items()
-                if k not in ("inventory_file", "inventory_dir")
+                if k
+                not in (
+                    "inventory_file",
+                    "inventory_dir",
+                    "central_sites_dict",
+                    "central_groups_dict",
+                )
             }
             inventory_dict["all"]["hosts"][host_name] = filtered_vars
 
@@ -661,6 +757,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                         "central_access_token",
                         "central_client_id",
                         "central_client_secret",
+                        "central_sites_dict",
+                        "central_groups_dict",
                     )
                 }
                 group_hosts[host.name] = filtered_vars
@@ -700,6 +798,81 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 f"Failed to write inventory to {output_file}: {str(e)}"
             )
 
+    def _write_token_only_to_yaml(self, central):
+        """
+        Update only the central_access_token value in an existing YAML inventory file
+
+        :param central: NewCentralBase connection object
+        """
+        output_file = self.get_option("output_file")
+        if not output_file:
+            raise ValueError("output_file is required when token_only is true")
+
+        if not (
+            hasattr(central, "token_info")
+            and "new_central" in central.token_info
+            and "access_token" in central.token_info["new_central"]
+        ):
+            raise ValueError(
+                "Could not find access_token in Central token_info"
+            )
+
+        new_token = str(central.token_info["new_central"]["access_token"])
+        client_id = str(central.token_info["new_central"]["client_id"])
+        client_secret = str(central.token_info["new_central"]["client_secret"])
+        base_url = str(central.token_info["new_central"]["base_url"])
+
+        try:
+            inventory_data = {}
+            if os.path.exists(output_file):
+                with open(output_file, "r") as f:
+                    inventory_data = yaml.safe_load(f) or {}
+
+            if not isinstance(inventory_data, dict):
+                raise ValueError(
+                    f"Expected YAML document root to be a mapping in {output_file}"
+                )
+
+            all_section = inventory_data.get("all")
+            if not isinstance(all_section, dict):
+                all_section = {}
+                inventory_data["all"] = all_section
+
+            vars_section = all_section.get("vars")
+            if not isinstance(vars_section, dict):
+                vars_section = {}
+                all_section["vars"] = vars_section
+
+            vars_section["central_access_token"] = new_token
+
+            output_dir = os.path.dirname(output_file)
+            if output_dir and not os.path.exists(output_dir):
+                os.makedirs(output_dir, exist_ok=True)
+
+            with open(output_file, "w") as f:
+                yaml.dump(
+                    inventory_data, f, default_flow_style=False, sort_keys=False
+                )
+
+            self.display.vvv(
+                f"Token-only mode: updated central_access_token in {output_file}"
+            )
+
+            # Update inventory with new token information for current execution
+            self.inventory.set_variable(
+                "all", "central_access_token", new_token
+            )
+            self.inventory.set_variable("all", "central_client_id", client_id)
+            self.inventory.set_variable(
+                "all", "central_client_secret", client_secret
+            )
+            self.inventory.set_variable("all", "central_base_url", base_url)
+
+        except Exception as e:
+            raise Exception(
+                f"Failed to update central_access_token in {output_file}: {str(e)}"
+            )
+
     def parse(self, inventory, loader, path, cache=True):
         """
         Parse the inventory file and populate inventory
@@ -724,11 +897,20 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             self._read_config_data(path)
         except Exception as e:
             raise Exception(f"Error reading config data: {str(e)}")
+
+        token_only = self.get_option("token_only")
+
         # Read existing inventory file if output_file is specified and check for token
         output_file = self.get_option("output_file")
 
-        existing_token = None
-        if output_file and os.path.exists(output_file):
+        existing_token = os.getenv("CENTRAL_ACCESS_TOKEN", None)
+
+        if existing_token:
+            self.display.vvv(
+                "Using access token from environment variable CENTRAL_ACCESS_TOKEN"
+            )
+
+        if not token_only and output_file and os.path.exists(output_file):
             try:
                 existing_token = self._read_token_from_output_file(output_file)
                 if existing_token:
@@ -750,6 +932,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             central = self._get_connection(existing_token)
         except Exception as e:
             raise ConnectionError(f"Failed to establish connection: {str(e)}")
+
+        if token_only:
+            self._write_token_only_to_yaml(central)
+            return
 
         # Fetch devices
         try:

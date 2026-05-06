@@ -43,17 +43,17 @@ site_attributes:
       required: true
     city:
       description:
-        - The city where the Site is located
+        - The city where the Site is located, can be any valid string but recommended to be in ISO format
       type: str
       required: true
     state:
       description:
-        - The state or province where the Site is located
+        - The state or province where the Site is located, must be in ISO short name format ex) California
       type: str
       required: true
     country:
       description:
-        - The country where the Site is located
+        - The country where the Site is located, must be in ISO short name format ex) United States
       type: str
       required: true
     zipcode:

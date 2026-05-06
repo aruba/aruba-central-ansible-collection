@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 try:
-    from pycentral import NewCentralBase
+    from pycentral import NewCentralBase, MSPBase
     from pycentral.classic.base import ArubaCentralBase
 
     HAS_PYCENTRAL = True
@@ -41,7 +41,6 @@ class CentralClient:
         if self.client_id and self.client_secret:
             token_info["new_central"]["client_id"] = self.client_id
             token_info["new_central"]["client_secret"] = self.client_secret
-            token_info["new_central"]["access_token"] = None
         # If OAuth token is provided, use it directly
         if self.access_token:
             # self.logger.info("Using provided OAuth token")
@@ -112,6 +111,91 @@ class GLPClient:
 
     def get_glp(self):
         return self.glp
+
+
+class MSPClient:
+    def __init__(
+        self,
+        client_id,
+        client_secret,
+        workspace_id,
+        base_url=None,
+        tenant_id=None,
+        tenant_name=None,
+        access_token=None,
+        **_,
+    ):
+        if not HAS_PYCENTRAL:
+            raise ImportError("The python pycentral package is required")
+
+        self.base_url = base_url
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.workspace_id = workspace_id
+        self.tenant_id = tenant_id
+        self.tenant_name = tenant_name
+        self.access_token = access_token
+
+        self.msp_conn = None
+        self.tenant_conn = None
+        self._connect()
+
+    def _connect(self):
+        self._validate_params()
+        # Setup the token_info dictionary based on the provided parameters
+        token_info = {}
+
+        # Workspace ID is required for MSP token generation
+        if self.workspace_id:
+            token_info["unified"] = {"workspace_id": self.workspace_id}
+
+        # If base_url omitted, token will only be valid for GLP operations
+        if self.base_url:
+            token_info["unified"] = {"base_url": self.base_url}
+
+        # Use client credentials to get a token
+        if self.client_id and self.client_secret:
+            token_info["unified"].update(
+                {
+                    "client_id": self.client_id,
+                    "client_secret": self.client_secret,
+                }
+            )
+
+        # If OAuth token is provided, use it directly
+        if self.access_token:
+            self.logger.info("Using provided OAuth token")
+            token_info["unified"]["access_token"] = self.access_token
+
+        try:
+            self.msp_conn = MSPBase(
+                token_info=token_info,
+                log_level="INFO",
+            )
+
+            if self.tenant_id or self.tenant_name:
+                self.tenant_conn = self.msp_conn.get_tenant_connection(
+                    tenant_workspace_id=self.tenant_id,
+                    tenant_name=self.tenant_name,
+                )
+
+        except Exception as e:
+            raise ConnectionError(f"Failed to connect to Central: {e}")
+
+    def _validate_params(self):
+        if not self.workspace_id:
+            raise ValueError(
+                "`workspace_id` is required for MSP token generation"
+            )
+
+        if not self.client_id or not self.client_secret:
+            raise ValueError("`client_id` and `client_secret` are required")
+
+    def get_msp_conn(self):
+        return self.msp_conn
+
+    def get_tenant_conn(self):
+        return self.tenant_conn
 
 
 class ClassicClient:

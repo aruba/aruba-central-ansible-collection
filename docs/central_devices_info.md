@@ -46,11 +46,30 @@ device_id:
     Device scopeId to retrieve when using device_by_id subset
   type: int
   required: false
-device_filter:
+device_filters:
   description: >
-    Filter expression for retrieving specific devices when using device_by_filter subset
-  type: str
+    Filters for retrieving specific devices when using the device_by_filter subset.
+    Only the endpoints for which a filter is provided will be called.
+    If only monitoring_filter is provided, only the monitoring endpoint is called.
+    If only inventory_filter is provided, only the inventory endpoint is called.
+    If both filters are provided, both endpoints are called and their results are merged,
+    with monitoring data added to matching inventory records and any monitoring-only
+    devices appended to the final list.
+  type: dict
   required: false
+  suboptions:
+    inventory_filter:
+      description: >
+        Filter expression for the /network-monitoring/v1/device-inventory endpoint.
+        When provided, only this endpoint is queried with the given filter.
+        Example: "deviceType eq SWITCH and siteId eq 12345"
+      type: str
+    monitoring_filter:
+      description: >
+        Filter expression for the /network-monitoring/v1/devices endpoint.
+        When provided, only this endpoint is queried with the given filter.
+        Example: "deviceType eq SWITCH and siteId eq 12345"
+      type: str
 ```
 
 ##### EXAMPLES
@@ -92,7 +111,9 @@ device_filter:
     base_url: https://us4.api.central.arubanetworks.com
     access_token: AABBCC-111222-333444-555666777888
     subset: device_by_filter
-    device_filter: "deviceType eq SWITCH"
+    device_filters:
+      inventory_filter: "isProvisioned eq Yes and siteName eq Ansible-Campus"
+      monitoring_filter: "siteName eq Ansible-Campus"
   register: devices_result
 ```
 

@@ -13,7 +13,7 @@ This Ansible collection provides modules and plugins to interact with [HPE Aruba
 
 - Ansible 2.19 or lower
 - Python 3.6 or later
-- pycentral v2 Python SDK
+- [pycentral v2](https://pycentral.readthedocs.io/en/v2/) Python SDK
     `pip3 install --pre pycentral`
 
 

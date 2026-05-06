@@ -56,17 +56,17 @@ options:
         required: true
       city:
         description:
-          - The city where the Site is located
+          - The city where the Site is located, can be any valid string but recommended to be in ISO format
         type: str
         required: true
       state:
         description:
-          - The state or province where the Site is located
+          - The state or province where the Site is located, must be in ISO short name format ex) California
         type: str
         required: true
       country:
         description:
-          - The country where the Site is located
+          - The country where the Site is located, must be in ISO short name format ex) United States
         type: str
         required: true
       zipcode:
@@ -138,6 +138,7 @@ result:
 
 from ansible.module_utils.basic import AnsibleModule
 from pycentral.scopes import Scopes
+from pycentral.utils.scope_utils import validate_iso_location
 from ansible_collections.arubanetworks.hpeanw_central.plugins.module_utils._module_pycentral_base import (  # NOQA
     ModuleCentralConnection,
     central_base_argument_spec,
@@ -186,6 +187,17 @@ def main():
     state = module.params["state"]
     result = dict()  # Initialize result dictionary for return values
 
+    # Validate that provided site attributes for location are in correct ISO format
+    if all(key in site_attributes for key in ["country", "state", "city"]):
+        try:
+            validate_iso_location(
+                country=site_attributes["country"],
+                state=site_attributes["state"],
+                city=site_attributes["city"],
+            )
+        except Exception as e:
+            module.fail_json(msg=f"Failed to validate ISO location: {e}")
+
     # Establish connection to HPE Aruba Networking Central
     try:
         central_obj = ModuleCentralConnection(module)
@@ -210,6 +222,18 @@ def main():
         site_name = site_attributes["name"]
         site_object = scopes.find_site(site_names=site_name)
 
+    except Exception as e:
+        error_msg = str(e)
+        # Continue if sites haven't been created yet
+        if (
+            "Failed to fetch sites from Central" in error_msg
+            and "Sites are a required construct" in error_msg
+        ):
+            site_object = None
+        else:
+            module.fail_json(msg=f"Failed to retrieve site {site_name}: {e}")
+
+    try:
         # Handle site creation or update (merged state)
         if state == "merged":
             # Check if a site with this name already exists

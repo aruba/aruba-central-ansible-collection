@@ -60,11 +60,30 @@ options:
       Device scopeId to retrieve when using device_by_id subset
     type: int
     required: false
-  device_filter:
+  device_filters:
     description: >
-      Filter expression for retrieving specific devices when using device_by_filter subset
-    type: str
+      Filters for retrieving specific devices when using the device_by_filter subset.
+      Only the endpoints for which a filter is provided will be called.
+      If only monitoring_filter is provided, only the monitoring endpoint is called.
+      If only inventory_filter is provided, only the inventory endpoint is called.
+      If both filters are provided, both endpoints are called and their results are merged,
+      with monitoring data added to matching inventory records and any monitoring-only
+      devices appended to the final list.
+    type: dict
     required: false
+    suboptions:
+      inventory_filter:
+        description: >
+          Filter expression for the /network-monitoring/v1/device-inventory endpoint.
+          When provided, only this endpoint is queried with the given filter.
+          Example: "deviceType eq SWITCH and siteId eq 12345"
+        type: str
+      monitoring_filter:
+        description: >
+          Filter expression for the /network-monitoring/v1/devices endpoint.
+          When provided, only this endpoint is queried with the given filter.
+          Example: "deviceType eq SWITCH and siteId eq 12345"
+        type: str
 """
 
 EXAMPLES = r"""
@@ -104,7 +123,9 @@ EXAMPLES = r"""
     base_url: https://us4.api.central.arubanetworks.com
     access_token: AABBCC-111222-333444-555666777888
     subset: device_by_filter
-    device_filter: "deviceType eq SWITCH"
+    device_filters:
+      inventory_filter: "isProvisioned eq Yes and siteName eq Ansible-Campus"
+      monitoring_filter: "siteName eq Ansible-Campus"
   register: devices_result
 """
 
@@ -154,7 +175,7 @@ def main():
         ),
         device_serial=dict(type="str", required=False),
         device_id=dict(type="int", required=False),
-        device_filter=dict(type="str", required=False),
+        device_filters=dict(type="dict", required=False),
     )
 
     # Initialize the Ansible module with argument spec
@@ -164,7 +185,7 @@ def main():
     subset = module.params["subset"]
     device_serial = module.params["device_serial"]
     device_id = module.params["device_id"]
-    device_filter = module.params["device_filter"]
+    device_filters = module.params["device_filters"]
 
     # Establish connection to HPE Aruba Networking Central
     try:
@@ -185,27 +206,28 @@ def main():
     try:
         result = dict()
 
-        if subset == "all_devices" or subset == "device_by_filter":
-            # Combining both all_devices and device_by_filter since they have similar logic
-            if subset == "device_by_filter" and not device_filter:
-                module.fail_json(
-                    msg="device_filter is required when subset is device_by_filter"
+        if subset == "all_devices":
+            # Call both endpoints without filters and merge results
+            try:
+                monitoring_devices = MonitoringDevices.get_all_devices(
+                    central_conn=central_conn,
                 )
-
-            # Get all devices in the Central account using MonitoringDevices class
-            # endpoints called:
-            # /network-monitoring/v1alpha1/device-inventory
-            # /network-monitoring/v1alpha1/devices
-            monitoring_devices = MonitoringDevices.get_all_devices(
-                central_conn=central_conn, filter_str=device_filter
-            )
+            except Exception as e:
+                raise e
 
             monitoring_devices_dict = {
                 device["id"]: device for device in monitoring_devices
             }
-            inventory = MonitoringDevices.get_all_device_inventory(
-                central_conn=central_conn, filter_str=device_filter
+            module.debug(
+                f"Retrieved {len(monitoring_devices_dict)} devices from /devices endpoint"
             )
+            try:
+                inventory = MonitoringDevices.get_all_device_inventory(
+                    central_conn=central_conn,
+                )
+            except Exception as e:
+                raise e
+
             inventory_devices_dict = {
                 device["id"]: device for device in inventory
             }
@@ -221,6 +243,125 @@ def main():
                     "count": len(inventory_devices_dict.keys()),
                 }
             )
+
+        elif subset == "device_by_filter":
+            if not device_filters:
+                module.fail_json(
+                    msg="device_filters is required when subset is device_by_filter"
+                )
+
+            has_monitoring = bool(device_filters.get("monitoring_filter"))
+            has_inventory = bool(device_filters.get("inventory_filter"))
+
+            if not has_monitoring and not has_inventory:
+                module.fail_json(
+                    msg="At least one of monitoring_filter or inventory_filter must be provided in device_filters"
+                )
+
+            if has_monitoring and not has_inventory:
+                # Only call the monitoring endpoint
+                try:
+                    monitoring_devices = MonitoringDevices.get_all_devices(
+                        central_conn=central_conn,
+                        filter_str=str(device_filters["monitoring_filter"]),
+                    )
+                # If filtering error occurs, fallback to unfiltered inventory
+                # retrieval to ensure best effort response rather than complete
+                # failure
+                except Exception as e:
+                    if "Filtering" in str(e):
+                        monitoring_devices = MonitoringDevices.get_all_devices(
+                            central_conn=central_conn,
+                        )
+                    else:
+                        raise e
+
+                result.update(
+                    {
+                        "devices": monitoring_devices,
+                        "count": len(monitoring_devices),
+                    }
+                )
+
+            elif has_inventory and not has_monitoring:
+                # Only call the inventory endpoint
+                try:
+                    inventory = MonitoringDevices.get_all_device_inventory(
+                        central_conn=central_conn,
+                        filter_str=str(device_filters["inventory_filter"]),
+                    )
+                # If filtering error occurs, fallback to unfiltered inventory
+                # retrieval to ensure best effort response rather than complete
+                # failure
+                except Exception as e:
+                    if "Filtering" in str(e):
+                        inventory = MonitoringDevices.get_all_device_inventory(
+                            central_conn=central_conn,
+                        )
+                    else:
+                        raise e
+
+                result.update(
+                    {
+                        "devices": inventory,
+                        "count": len(inventory),
+                    }
+                )
+
+            else:
+                # Both filters provided — call both endpoints and merge results
+                try:
+                    monitoring_devices = MonitoringDevices.get_all_devices(
+                        central_conn=central_conn,
+                        filter_str=str(device_filters["monitoring_filter"]),
+                    )
+                except Exception as e:
+                    if "Filtering" in str(e):
+                        monitoring_devices = MonitoringDevices.get_all_devices(
+                            central_conn=central_conn,
+                        )
+                    else:
+                        raise e
+
+                monitoring_devices_dict = {
+                    device["id"]: device for device in monitoring_devices
+                }
+                module.debug(
+                    f"Retrieved {len(monitoring_devices_dict)} devices from /devices endpoint"
+                )
+                try:
+                    inventory = MonitoringDevices.get_all_device_inventory(
+                        central_conn=central_conn,
+                        filter_str=str(device_filters["inventory_filter"]),
+                    )
+                except Exception as e:
+                    if "Filtering" in str(e):
+                        inventory = MonitoringDevices.get_all_device_inventory(
+                            central_conn=central_conn,
+                        )
+                    else:
+                        raise e
+
+                inventory_devices_dict = {
+                    device["id"]: device for device in inventory
+                }
+                for device in inventory_devices_dict.keys():
+                    if device in monitoring_devices_dict:
+                        inventory_devices_dict[device].update(
+                            monitoring_devices_dict[device]
+                        )
+
+                # Append any monitoring results not present in inventory
+                for device_id_key, device in monitoring_devices_dict.items():
+                    if device_id_key not in inventory_devices_dict:
+                        inventory_devices_dict[device_id_key] = device
+
+                result.update(
+                    {
+                        "devices": list(inventory_devices_dict.values()),
+                        "count": len(inventory_devices_dict.keys()),
+                    }
+                )
 
         elif subset == "device_by_serial" or subset == "device_by_id":
             # Combining both device_by_serial and device_by_id since they have similar logic
