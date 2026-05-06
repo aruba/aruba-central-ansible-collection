@@ -88,7 +88,6 @@ class GLPClient:
         if self.client_id and self.client_secret:
             token_info["glp"]["client_id"] = self.client_id
             token_info["glp"]["client_secret"] = self.client_secret
-            token_info["glp"]["access_token"] = None
         # If OAuth token is provided, use it directly
         if self.access_token:
             # self.logger.info("Using provided OAuth token")
