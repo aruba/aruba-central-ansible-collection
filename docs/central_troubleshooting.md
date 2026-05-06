@@ -30,8 +30,8 @@ access_token:
   required: false
 devices:
   description: >
-    List of device serial numbers to run the troubleshooting action on. For 
-    efficiency it's recommended to provide a list of serial numbers rather 
+    List of device serial numbers to run the troubleshooting action on. For
+    efficiency it's recommended to provide a list of serial numbers rather
     than a single serial number and repeat the task multiple times.
   type: list
   elements: str

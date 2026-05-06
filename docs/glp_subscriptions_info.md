@@ -59,12 +59,12 @@ select:
   register: subscriptions_result
 
 - name: Get Subscriptions by Filter
-    arubanetworks.hpeanw_central.glp_subscriptions_info:
+  arubanetworks.hpeanw_central.glp_subscriptions_info:
     client_id: 111222-333444-555666777888
     client_secret: 888777666555444333222111
     subset: subscription_by_filter
     subscription_filter: "subscriptionType eq 'CENTRAL_GW'"
-    register: subscriptions_result
+  register: subscriptions_result
 ```
 
 ##### RETURNED
