@@ -9,6 +9,7 @@ __metaclass__ = type
 from ansible_collections.arubanetworks.hpeanw_central.plugins.module_utils.clients.pycentral_clients import (  # NOQA
     CentralClient,
     GLPClient,
+    MSPClient,
     ClassicClient,
 )
 
@@ -21,6 +22,13 @@ class ModuleCentralConnection(CentralClient):
 
 
 class ModuleGLPConnection(GLPClient):
+    def __init__(self, module):
+        super().__init__(**module.params)
+        self.module = module
+        self.params = module.params
+
+
+class ModuleMSPConnection(MSPClient):
     def __init__(self, module):
         super().__init__(**module.params)
         self.module = module
@@ -78,6 +86,44 @@ def glp_base_argument_spec():
             type="str",
             default=None,
             no_log=True,
+        ),
+    )
+
+
+def msp_base_argument_spec():
+    """
+    This returns a dictionary that can be used as the baseline to enable MSP functionality in modules
+    """
+    return dict(
+        base_url=dict(
+            type="str",
+            required=False,
+        ),
+        client_id=dict(
+            type="str",
+            required=True,
+        ),
+        client_secret=dict(
+            type="str",
+            required=True,
+            no_log=True,
+        ),
+        access_token=dict(
+            type="str",
+            default=None,
+            no_log=True,
+        ),
+        workspace_id=dict(
+            type="str",
+            required=True,
+        ),
+        tenant_id=dict(
+            type="str",
+            required=False,
+        ),
+        tenant_name=dict(
+            type="str",
+            required=False,
         ),
     )
 
