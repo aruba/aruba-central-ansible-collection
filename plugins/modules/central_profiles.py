@@ -25,17 +25,34 @@ options:
     required: true
   client_id:
     description: >
-      The client ID for the Central account, used to create OAuth token, required if access_token is not provided
+      The client ID for the Central account, used to create OAuth token, required if access_token is not provided.
+      If using unified credentials, then this will be the client_id of GreenLake Platform (GLP) and workspace_id must be provided.
     type: str
     required: false
   client_secret:
     description: >
-      The client secret for the Central account, used to create OAuth token, required if access_token is not provided
+      The client secret for the Central account, used to create OAuth token, required if access_token is not provided.
+      If using unified credentials, then this will be the client_secret of GreenLake Platform (GLP) and workspace_id must be provided.
     type: str
     required: false
   access_token:
     description: >
       A generated OAuth token for authenticating API requests
+    type: str
+    required: false
+  workspace_id:
+    description: >
+      GreenLake Platform workspace ID used for unified or MSP authentication
+    type: str
+    required: false
+  tenant_name:
+    description: >
+      Tenant name used to obtain a tenant-scoped connection when workspace_id is provided
+    type: str
+    required: false
+  tenant_id:
+    description: >
+      Tenant ID gathered from GLP used to obtain a tenant-scoped connection when workspace_id is provided
     type: str
     required: false
   config_dict:
@@ -65,20 +82,20 @@ options:
     required: false
   local:
     description: >
-      Dictionary containing scope_id (integer) and persona (string) values to create a LOCAL profile
-      If provided, the profile will be created as a LOCAL profile associated with the specified scope and persona
+      Dictionary containing scope-id (integer) and device-function (string) values to create a LOCAL profile
+      If provided, the profile will be created as a LOCAL profile associated with the specified scope and device-function
       Requires `resource` to be set, will be set automatically when using `category`
     type: dict
     required: false
     suboptions:
-      scope_id:
+      scope-id:
         description:
           - The scope ID to associate with the LOCAL profile
         type: int
         required: true
-      persona:
+      device-function:
         description:
-          - The persona to associate with the LOCAL profile
+          - The device-function to associate with the LOCAL profile
         type: str
         required: true
   state:
@@ -119,8 +136,8 @@ EXAMPLES = r"""
     path: "system-info"
     state: merged
     local:
-      scope_id: 46344420928
-      persona: "ACCESS_SWITCH"
+      scope-id: 46344420928
+      device-function: "ACCESS_SWITCH"
     config_dict:
       hostname: RSVL-L1-Access-ANSIBLE
 
@@ -205,6 +222,20 @@ EXAMPLES = r"""
     path: "layer2-vlan"
     state: deleted
 
+- name: Create a VLAN profile using unified credentials
+  arubanetworks.hpeanw_central.central_profiles:
+    base_url: "{{ central_base_url }}"
+    client_id: "{{ glp_client_id }}"
+    client_secret: "{{ glp_client_secret }}"
+    workspace_id: "{{ glp_workspace_id }}"
+    name: 100
+    path: "layer2-vlan"
+    config_dict:
+      vlan: 100
+      name: "Corp-VLAN"
+      description: "Corporate VLAN for main office"
+    state: merged
+
 """
 
 RETURN = r"""
@@ -251,18 +282,22 @@ result:
 from ansible.module_utils.basic import AnsibleModule
 
 from ansible_collections.arubanetworks.hpeanw_central.plugins.module_utils._module_pycentral_base import (  # NOQA
-    ModuleCentralConnection,
     central_base_argument_spec,
+    get_central_connection,
 )
 
 import traceback
 from pycentral.profiles import Profiles
+from pycentral.utils.profile_utils import validate_local
 import time
 
 
 def main():
     module_args = dict(
         **central_base_argument_spec(),
+        workspace_id=dict(type="str", required=False),
+        tenant_id=dict(type="str", required=False),
+        tenant_name=dict(type="str", required=False),
         config_dict=dict(type="dict", required=True),
         path=dict(type="str", required=True),
         name=dict(type="str", required=False, default=None),
@@ -284,18 +319,8 @@ def main():
     name = module.params["name"]
     state = module.params["state"]
 
-    try:
-        central_obj = ModuleCentralConnection(module)
-        central_conn = central_obj.get_central_conn()
-
-        if central_conn is None:
-            module.fail_json(
-                msg="Failed to establish connection to HPE Aruba Networking Central"
-            )
-    except Exception as e:
-        module.fail_json(
-            msg=f"Failed to load 'arubanetworks.hpeanw_central.central' connection plugin: {e}"
-        )
+    # Establish a connection to Central using provided credentials or access token
+    central_conn = get_central_connection(module)
 
     try:
         profile_obj = Profiles(name=name, central_conn=central_conn)
@@ -313,8 +338,8 @@ def main():
             path_sections = path.split("/")
             if path_sections and (name not in path_sections[-1]):
                 profile_obj.set_path(path + "/" + name)
-        if local:
-            local["scope_id"] = int(local["scope_id"])
+        if local and validate_local(local):
+            local["scope-id"] = int(local["scope-id"])
             profile_obj.set_local_parameters(local)
 
         if not resource and local:

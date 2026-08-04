@@ -26,17 +26,34 @@ options:
     required: true
   client_id:
     description: >
-      The client ID for the Central account, used to create OAuth token, required if access_token is not provided
+      The client ID for the Central account, used to create OAuth token, required if access_token is not provided.
+      If using unified credentials, then this will be the client_id of GreenLake Platform (GLP) and workspace_id must be provided.
     type: str
     required: false
   client_secret:
     description: >
-      The client secret for the Central account, used to create OAuth token, required if access_token is not provided
+      The client secret for the Central account, used to create OAuth token, required if access_token is not provided.
+      If using unified credentials, then this will be the client_secret of GreenLake Platform (GLP) and workspace_id must be provided.
     type: str
     required: false
   access_token:
     description: >
       A generated OAuth token for authenticating API requests
+    type: str
+    required: false
+  workspace_id:
+    description: >
+      GreenLake Platform workspace ID used for unified or MSP authentication
+    type: str
+    required: false
+  tenant_name:
+    description: >
+      Tenant name used to obtain a tenant-scoped connection when workspace_id is provided
+    type: str
+    required: false
+  tenant_id:
+    description: >
+      Tenant ID gathered from GLP used to obtain a tenant-scoped connection when workspace_id is provided
     type: str
     required: false
   method:
@@ -86,6 +103,15 @@ EXAMPLES = r"""
         - scope-name: "1234567897"
           persona: ACCESS_SWITCH
           resource: "layer2-vlan/404"
+
+- name: Get device inventory from Central using unified credentials
+  arubanetworks.hpeanw_central.central_api:
+    base_url: "{{ central_base_url }}"
+    client_id: "{{ glp_client_id }}"
+    client_secret: "{{ glp_client_secret }}"
+    workspace_id: "{{ glp_workspace_id }}"
+    method: GET
+    path: "/network-monitoring/v1/device-inventory"
 """
 
 RETURN = r"""
@@ -111,8 +137,8 @@ result:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.arubanetworks.hpeanw_central.plugins.module_utils._module_pycentral_base import (  # NOQA
-    ModuleCentralConnection,
     central_base_argument_spec,
+    get_central_connection,
 )
 import traceback
 
@@ -120,6 +146,9 @@ import traceback
 def main():
     module_args = dict(
         **central_base_argument_spec(),
+        workspace_id=dict(type="str", required=False),
+        tenant_id=dict(type="str", required=False),
+        tenant_name=dict(type="str", required=False),
         method=dict(
             type="str",
             default="GET",
@@ -137,19 +166,7 @@ def main():
     data = module.params["data"]
     params = module.params["params"]
 
-    try:
-        central_obj = ModuleCentralConnection(module)
-        central_conn = central_obj.get_central_conn()
-
-        if central_conn is None:
-            module.fail_json(
-                msg="Failed to establish connection to HPE Aruba Networking Central"
-            )
-    except Exception as e:
-        module.fail_json(
-            msg="Failed to establish connection to HPE Aruba Networking Central",
-            exception=str(e),
-        )
+    central_conn = get_central_connection(module)
 
     try:
         resp = central_conn.command(

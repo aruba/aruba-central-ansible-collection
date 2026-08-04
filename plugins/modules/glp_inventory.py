@@ -20,17 +20,34 @@ version_added: "1.0.0"
 options:
   client_id:
     description: >
-      The client ID for the GLP account, used to create OAuth token, required if access_token is not provided
+      The client ID for the GLP account, used to create OAuth token, required if access_token is not provided.
+      If using unified credentials, workspace_id must be provided.
     type: str
     required: false
   client_secret:
     description: >
-      The client secret for the GLP account, used to create OAuth token, required if access_token is not provided
+      The client secret for the GLP account, used to create OAuth token, required if access_token is not provided.
+      If using unified credentials, workspace_id must be provided.
     type: str
     required: false
   access_token:
     description: >
       A generated OAuth token for authenticating API requests
+    type: str
+    required: false
+  workspace_id:
+    description: >
+      GreenLake Platform workspace ID used for unified or MSP authentication
+    type: str
+    required: false
+  tenant_name:
+    description: >
+      Tenant name used to obtain a tenant-scoped connection when workspace_id is provided
+    type: str
+    required: false
+  tenant_id:
+    description: >
+      Tenant ID gathered from GLP used to obtain a tenant-scoped connection when workspace_id is provided
     type: str
     required: false
   devices:
@@ -79,6 +96,16 @@ EXAMPLES = r"""
       - serial_number: "SN987654321"
         mac_address: "66:77:88:99:AA:BB"
   register: devices_result
+
+- name: Add Network Devices using unified credentials
+  arubanetworks.hpeanw_central.glp_inventory:
+    client_id: "111222-333444-555666777888"
+    client_secret: "888777666555444333222111"
+    workspace_id: 1234567890
+    devices:
+      - serial_number: "SN123456789"
+        mac_address: "00:11:22:33:44:55"
+  register: devices_result
 """
 
 RETURN = r"""
@@ -105,8 +132,8 @@ devices:
 from ansible.module_utils.basic import AnsibleModule
 
 from ansible_collections.arubanetworks.hpeanw_central.plugins.module_utils._module_pycentral_base import (  # NOQA
-    ModuleGLPConnection,
     glp_base_argument_spec,
+    get_glp_connection,
 )
 import traceback
 from pycentral.glp import Devices
@@ -115,6 +142,9 @@ from pycentral.glp import Devices
 def main():
     module_args = dict(
         **glp_base_argument_spec(),
+        workspace_id=dict(type="str", required=False),
+        tenant_id=dict(type="str", required=False),
+        tenant_name=dict(type="str", required=False),
         devices=dict(type="list", elements="dict", required=True),
         state=dict(
             type="str",
@@ -142,20 +172,8 @@ def main():
 
     add_devices = []
 
-    try:
-        glp_obj = ModuleGLPConnection(module)
-        glp_conn = glp_obj.get_glp()
-
-        if glp_conn is None:
-            module.fail_json(
-                msg="Failed to establish connection to HPE GreenLake Platform"
-            )
-
-    except Exception as e:
-        module.fail_json(
-            msg="Failed to establish connection to HPE GreenLake Platform",
-            exception=str(e),
-        )
+    # Establish a connection to GreenLake Platform using provided credentials or access token
+    glp_conn = get_glp_connection(module)
 
     try:
         d = Devices()

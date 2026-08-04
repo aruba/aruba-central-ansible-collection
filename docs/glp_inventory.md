@@ -7,17 +7,34 @@ description: This module allows for adding devices to the inventory in HPE Green
 ```YAML
 client_id:
   description: >
-    The client ID for the GLP account, used to create OAuth token, required if access_token is not provided
+    The client ID for the GLP account, used to create OAuth token, required if access_token is not provided.
+    If using unified credentials, workspace_id must be provided.
   type: str
   required: false
 client_secret:
   description: >
-    The client secret for the GLP account, used to create OAuth token, required if access_token is not provided
+    The client secret for the GLP account, used to create OAuth token, required if access_token is not provided.
+    If using unified credentials, workspace_id must be provided.
   type: str
   required: false
 access_token:
   description: >
     A generated OAuth token for authenticating API requests
+  type: str
+  required: false
+workspace_id:
+  description: >
+    GreenLake Platform workspace ID used for unified or MSP authentication
+  type: str
+  required: false
+tenant_name:
+  description: >
+    Tenant name used to obtain a tenant-scoped connection when workspace_id is provided
+  type: str
+  required: false
+tenant_id:
+  description: >
+    Tenant ID gathered from GLP used to obtain a tenant-scoped connection when workspace_id is provided
   type: str
   required: false
 devices:
@@ -67,6 +84,16 @@ state:
         mac_address: "00:11:22:33:44:55"
       - serial_number: "SN987654321"
         mac_address: "66:77:88:99:AA:BB"
+  register: devices_result
+
+- name: Add Network Devices using unified credentials
+  arubanetworks.hpeanw_central.glp_inventory:
+    client_id: "111222-333444-555666777888"
+    client_secret: "888777666555444333222111"
+    workspace_id: 1234567890
+    devices:
+      - serial_number: "SN123456789"
+        mac_address: "00:11:22:33:44:55"
   register: devices_result
 ```
 

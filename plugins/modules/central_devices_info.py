@@ -26,17 +26,34 @@ options:
     required: true
   client_id:
     description: >
-      The client ID for the Central account, used to create OAuth token, required if access_token is not provided
+      The client ID for the Central account, used to create OAuth token, required if access_token is not provided.
+      If using unified credentials, then this will be the client_id of GreenLake Platform (GLP) and workspace_id must be provided.
     type: str
     required: false
   client_secret:
     description: >
-      The client secret for the Central account, used to create OAuth token, required if access_token is not provided
+      The client secret for the Central account, used to create OAuth token, required if access_token is not provided.
+      If using unified credentials, then this will be the client_secret of GreenLake Platform (GLP) and workspace_id must be provided.
     type: str
     required: false
   access_token:
     description: >
       A generated OAuth token for authenticating API requests
+    type: str
+    required: false
+  workspace_id:
+    description: >
+      GreenLake Platform workspace ID used for unified or MSP authentication
+    type: str
+    required: false
+  tenant_name:
+    description: >
+      Tenant name used to obtain a tenant-scoped connection when workspace_id is provided
+    type: str
+    required: false
+  tenant_id:
+    description: >
+      Tenant ID gathered from GLP used to obtain a tenant-scoped connection when workspace_id is provided
     type: str
     required: false
   subset:
@@ -127,6 +144,14 @@ EXAMPLES = r"""
       inventory_filter: "isProvisioned eq Yes and siteName eq Ansible-Campus"
       monitoring_filter: "siteName eq Ansible-Campus"
   register: devices_result
+
+- name: Get all devices from Central using unified credentials
+  arubanetworks.hpeanw_central.central_devices_info:
+    base_url: "{{ central_base_url }}"
+    client_id: "{{ glp_client_id }}"
+    client_secret: "{{ glp_client_secret }}"
+    workspace_id: "{{ glp_workspace_id }}"
+  register: devices_result
 """
 
 RETURN = r"""
@@ -153,8 +178,8 @@ devices:
 from ansible.module_utils.basic import AnsibleModule
 from pycentral.new_monitoring import MonitoringDevices
 from ansible_collections.arubanetworks.hpeanw_central.plugins.module_utils._module_pycentral_base import (  # NOQA
-    ModuleCentralConnection,
     central_base_argument_spec,
+    get_central_connection,
 )
 
 import traceback
@@ -163,6 +188,9 @@ import traceback
 def main():
     module_args = dict(
         **central_base_argument_spec(),  # Includes base_url, client_id, client_secret, access_token
+        workspace_id=dict(type="str", required=False),
+        tenant_id=dict(type="str", required=False),
+        tenant_name=dict(type="str", required=False),
         subset=dict(
             type="str",
             default="all_devices",
@@ -187,21 +215,8 @@ def main():
     device_id = module.params["device_id"]
     device_filters = module.params["device_filters"]
 
-    # Establish connection to HPE Aruba Networking Central
-    try:
-        central_obj = ModuleCentralConnection(module)
-        central_conn = central_obj.get_central_conn()
-
-        # Verify connection was established successfully
-        if central_conn is None:
-            module.fail_json(
-                msg="Failed to establish connection to HPE Aruba Networking Central"
-            )
-    except Exception as e:
-        # Handle connection plugin loading errors
-        module.fail_json(
-            msg=f"Failed to load 'arubanetworks.hpeanw_central.central' connection plugin: {e}"
-        )
+    # Establish a connection to Central using provided credentials or access token
+    central_conn = get_central_connection(module)
 
     try:
         result = dict()

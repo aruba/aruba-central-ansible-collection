@@ -12,17 +12,34 @@ base_url:
   required: true
 client_id:
   description: >
-    The client ID for the Central account, used to create OAuth token, required if access_token is not provided
+    The client ID for the Central account, used to create OAuth token, required if access_token is not provided.
+    If using unified credentials, then this will be the client_id of GreenLake Platform (GLP) and workspace_id must be provided.
   type: str
   required: false
 client_secret:
   description: >
-    The client secret for the Central account, used to create OAuth token, required if access_token is not provided
+    The client secret for the Central account, used to create OAuth token, required if access_token is not provided.
+    If using unified credentials, then this will be the client_secret of GreenLake Platform (GLP) and workspace_id must be provided.
   type: str
   required: false
 access_token:
   description: >
     A generated OAuth token for authenticating API requests
+  type: str
+  required: false
+workspace_id:
+  description: >
+    GreenLake Platform workspace ID used for unified or MSP authentication
+  type: str
+  required: false
+tenant_name:
+  description: >
+    Tenant name used to obtain a tenant-scoped connection when workspace_id is provided
+  type: str
+  required: false
+tenant_id:
+  description: >
+    Tenant ID gathered from GLP used to obtain a tenant-scoped connection when workspace_id is provided
   type: str
   required: false
 subset:
@@ -114,6 +131,14 @@ device_filters:
     device_filters:
       inventory_filter: "isProvisioned eq Yes and siteName eq Ansible-Campus"
       monitoring_filter: "siteName eq Ansible-Campus"
+  register: devices_result
+
+- name: Get all devices from Central using unified credentials
+  arubanetworks.hpeanw_central.central_devices_info:
+    base_url: "{{ central_base_url }}"
+    client_id: "{{ glp_client_id }}"
+    client_secret: "{{ glp_client_secret }}"
+    workspace_id: "{{ glp_workspace_id }}"
   register: devices_result
 ```
 

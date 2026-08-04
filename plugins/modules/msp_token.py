@@ -30,7 +30,7 @@ options:
       The client secret for the MSP workspace ID, used to create OAuth token
     type: str
     required: true
-  workspace_id:
+  msp_workspace_id:
     description: >
       The GreenLake workspace ID associated with the MSP workspace
     type: str
@@ -54,7 +54,7 @@ EXAMPLES = r"""
   arubanetworks.hpeanw_central.msp_token:
     client_id: 111222-333444-555666777888
     client_secret: 888777666555444333222111
-    workspace_id: workspace-abc-123
+    msp_workspace_id: workspace-abc-123
   register: token_result
 
 - set_fact:
@@ -64,7 +64,7 @@ EXAMPLES = r"""
   arubanetworks.hpeanw_central.msp_token:
     client_id: 111222-333444-555666777888
     client_secret: 888777666555444333222111
-    workspace_id: workspace-abc-123
+    msp_workspace_id: workspace-abc-123
     tenant_id: tenant-abc-123
   register: tenant_token_result
 
@@ -72,7 +72,7 @@ EXAMPLES = r"""
   arubanetworks.hpeanw_central.msp_token:
     client_id: 111222-333444-555666777888
     client_secret: 888777666555444333222111
-    workspace_id: workspace-abc-123
+    msp_workspace_id: workspace-abc-123
     tenant_name: MyTenant
   register: tenant_token_result
 

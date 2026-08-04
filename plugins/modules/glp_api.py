@@ -21,17 +21,34 @@ version_added: "1.0.0"
 options:
   client_id:
     description: >
-      The client ID for the GLP account, used to create OAuth token, required if access_token is not provided
+      The client ID for the GLP account, used to create OAuth token, required if access_token is not provided.
+      If using unified credentials, workspace_id must be provided.
     type: str
     required: false
   client_secret:
     description: >
-      The client secret for the GLP account, used to create OAuth token, required if access_token is not provided
+      The client secret for the GLP account, used to create OAuth token, required if access_token is not provided.
+      If using unified credentials, workspace_id must be provided.
     type: str
     required: false
   access_token:
     description: >
       A generated OAuth token for authenticating API requests
+    type: str
+    required: false
+  workspace_id:
+    description: >
+      GreenLake Platform workspace ID used for unified or MSP authentication
+    type: str
+    required: false
+  tenant_name:
+    description: >
+      Tenant name used to obtain a tenant-scoped connection when workspace_id is provided
+    type: str
+    required: false
+  tenant_id:
+    description: >
+      Tenant ID gathered from GLP used to obtain a tenant-scoped connection when workspace_id is provided
     type: str
     required: false
   method:
@@ -68,6 +85,16 @@ EXAMPLES = r"""
     method: GET
     path: " /subscriptions/v1/subscriptions"
   register: subscriptions_result
+
+- name: Get list of all subscriptions using unified credentials
+  arubanetworks.hpeanw_central.glp_api:
+    client_id: 111222-333444-555666777888
+    client_secret: 888777666555444333222111
+    workspace_id: 1234567890
+    method: GET
+    path: " /subscriptions/v1/subscriptions"
+  register: subscriptions_result
+
 """
 
 RETURN = r"""
@@ -93,8 +120,8 @@ result:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.arubanetworks.hpeanw_central.plugins.module_utils._module_pycentral_base import (  # NOQA
-    ModuleGLPConnection,
     glp_base_argument_spec,
+    get_glp_connection,
 )
 import traceback
 
@@ -102,6 +129,9 @@ import traceback
 def main():
     module_args = dict(
         **glp_base_argument_spec(),
+        workspace_id=dict(type="str", required=False),
+        tenant_id=dict(type="str", required=False),
+        tenant_name=dict(type="str", required=False),
         method=dict(
             type="str",
             default="GET",
@@ -119,19 +149,8 @@ def main():
     data = module.params["data"]
     params = module.params["params"]
 
-    try:
-        glp_obj = ModuleGLPConnection(module)
-        glp_conn = glp_obj.get_glp()
-
-        if glp_conn is None:
-            module.fail_json(
-                msg="Failed to establish connection to HPE GreenLake Platform"
-            )
-    except Exception as e:
-        module.fail_json(
-            msg="Failed to establish connection to HPE GreenLake Platform",
-            exception=str(e),
-        )
+    # Establish a connection to GreenLake Platform using provided credentials or access token
+    glp_conn = get_glp_connection(module)
 
     try:
         resp = glp_conn.command(

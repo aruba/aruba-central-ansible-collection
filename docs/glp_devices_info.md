@@ -7,17 +7,34 @@ description: This module allows you to retrieve information about devices manage
 ```YAML
 client_id:
   description: >
-    The client ID for the GLP account, used to create OAuth token, required if access_token is not provided
+    The client ID for the GLP account, used to create OAuth token, required if access_token is not provided.
+    If using unified credentials, workspace_id must be provided.
   type: str
   required: false
 client_secret:
   description: >
-    The client secret for the GLP account, used to create OAuth token, required if access_token is not provided
+    The client secret for the GLP account, used to create OAuth token, required if access_token is not provided.
+    If using unified credentials, workspace_id must be provided.
   type: str
   required: false
 access_token:
   description: >
     A generated OAuth token for authenticating API requests
+  type: str
+  required: false
+workspace_id:
+  description: >
+    GreenLake Platform workspace ID used for unified or MSP authentication
+  type: str
+  required: false
+tenant_name:
+  description: >
+    Tenant name used to obtain a tenant-scoped connection when workspace_id is provided
+  type: str
+  required: false
+tenant_id:
+  description: >
+    Tenant ID gathered from GLP used to obtain a tenant-scoped connection when workspace_id is provided
   type: str
   required: false
 subset:
@@ -82,6 +99,13 @@ serial_number:
     access_token: AABBCC-111222-333444-555666777888
     subset: device_by_serial
     serial_number: "ABC123456"
+  register: devices_result
+
+- name: Get all devices using unified credentials
+  arubanetworks.hpeanw_central.glp_devices_info:
+    client_id: 111222-333444-555666777888
+    client_secret: 888777666555444333222111
+    workspace_id: 1234567890
   register: devices_result
 ```
 

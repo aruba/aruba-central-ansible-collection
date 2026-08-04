@@ -26,87 +26,109 @@ ansible-galaxy collection install arubanetworks.hpeanw_central
   
 Additionally, the bundled version of the collection is provided within the repository itself and can be installed through the following command:
 ```bash
-ansible-galaxy collection install arubanetworks-hpeanw_central-2.0.0-beta.tar.gz -f
+ansible-galaxy collection install . -f
 ```
 
 ## Authentication
 
-Each module in the HPE Aruba Networking Central Collection expects authentication credentials. Depending on the module those credentials may apply to new Central or GLP. Refer to the [module's documentation](./docs/) for guidance.  
+Each module in the HPE Aruba Networking Central Collection expects authentication credentials. Depending on the module those credentials may apply to Central or GLP. Refer to the [module's documentation](./docs/) for guidance.  
 
-### New Central:  
+### Unified Credentials
+This collection supports a unified credential model that allows users to use [a single set of GLP client credentials](https://developer.arubanetworks.com/new-central/docs/generating-and-managing-access-tokens#create-client-credentials) to authenticate for **both** Central and GLP modules. When using modules for Central, the `base_url` is required.
+1. **Workspace ID**: The `workspace_id` can be found in the GLP UI, [by navigating to **Manage Workspace**](https://developer.arubanetworks.com/new-central/docs/generating-and-managing-access-tokens#using-api-credentials-for-glp).
+2. **Client ID and Client Secret**: Provide the `client_id` and `client_secret` scoped to the HPE GreenLake Platform to automatically generate and manage OAuth2 tokens. Use this guide for instructions on [how to create a personal API client](https://developer.greenlake.hpe.com/docs/greenlake/guides/public/authentication/authentication#creating-a-personal-api-client) for GLP.
+3. **Base URL**: Provide `base_url` which is the base URL for HPE Aruba Networking Central (e.g., https://us4.api.central.arubanetworks.com). Refer to [this guide](https://developer.arubanetworks.com/new-central/docs/making-api-calls#3-choosing-the-right-base-url) on how to find your Base URL for Central. Applicable to `central_*` modules only, omit for `glp_*` modules.
+
+### Central:  
 1. **Base URL**: Provide `base_url` which is the base URL for HPE Aruba Networking Central (e.g., https://us4.api.central.arubanetworks.com). Refer to [this guide](https://developer.arubanetworks.com/new-central/docs/making-api-calls#3-choosing-the-right-base-url) on how to find your Base URL for Central.
-2. **Client ID and Client Secret**: Provide `client_id` and `client_secret` to automatically generate and manage OAuth2 tokens. Use this guide for instructions on [how to generate and manage an access token](https://developer.arubanetworks.com/new-central/docs/generating-and-managing-access-tokens) for HPE Aruba Networking Central.
-3. **Pre-generated Token**: Alternatively, a pre-generated OAuth2 token can be provided directly through the parameter `access_token`, remove if no longer valid. When provided the collection will always attempt to use provided token, upon failure will generate a new one if `client_id` and `client_secret` are provided but will not be saved.
+2. **Client ID and Client Secret**: Provide `client_id` and `client_secret` to automatically generate and manage OAuth2 tokens. Use this guide for instructions on [how to create client credentials](https://developer.arubanetworks.com/new-central/docs/generating-and-managing-access-tokens#create-client-credentials) for HPE Aruba Networking Central.
+3. **Pre-generated Token**: Alternatively, a pre-generated OAuth2 token can be provided directly through the parameter `access_token`. When provided the collection will always attempt to use provided token, upon failure will generate a new one if `client_id` and `client_secret` are provided but will not be saved. Use this guide for instructions on [how to generate and manage an access token](https://developer.arubanetworks.com/new-central/docs/generating-and-managing-access-tokens).
 
 ### HPE GreenLake Platform (GLP):  
 - GLP does not require a Base URL.
-1. **Client ID and Client Secret**: Provide `client_id` and `client_secret` to automatically generate and manage OAuth2 tokens. Use this guide for instructions on [how to generate and manage an access token](https://developer.greenlake.hpe.com/docs/greenlake/guides/public/authentication/authentication#creating-a-personal-api-client) for HPE GreenLake Platform.
-2. **Pre-generated Token**: Alternatively, [a pre-generated OAuth2 token](https://developer.greenlake.hpe.com/docs/greenlake/guides/public/authentication/authentication#generating-an-access-token) can be provided directly through the parameter `access_token`, remove if no longer valid. When provided the collection will always attempt to use provided token, upon failure will generate a new one if `client_id` and `client_secret` are provided but will not be saved.
+1. **Client ID and Client Secret**: Provide `client_id` and `client_secret` to automatically generate and manage OAuth2 tokens. Use this guide for instructions on [how to create a personal API client](https://developer.greenlake.hpe.com/docs/greenlake/guides/public/authentication/authentication#creating-a-personal-api-client) for HPE GreenLake Platform.
+2. **Pre-generated Token**: Alternatively, [a pre-generated OAuth2 token](https://developer.greenlake.hpe.com/docs/greenlake/guides/public/authentication/authentication#generating-an-access-token) can be provided directly through the parameter `access_token`. When provided the collection will always attempt to use provided token, upon failure will generate a new one if `client_id` and `client_secret` are provided but will not be saved.
 
 ### Classic Central:  
 1. **Base URL**: Provide `base_url` which is the base URL for classic HPE Aruba Networking Central (e.g., https://apigw-uswest5.central.arubanetworks.com). Refer to [this guide](https://developer.arubanetworks.com/central/docs/api-oauth-access-token#table-domain-urls-for-api-gateway-access) on how to find your Base URL for classic Central.
 2. **Pre-generated Access Token**: A pre-generated OAuth2 access token is required for each module through the parameter `access_token`. This collection does not support the automatic generation of a new access token, upon expiration a new valid token must be provided.
 
 
-For each platform (except classic Central), it is recommended to use the `<platform>_token` module to generate an OAuth token for the session then provide the generated token to each module like so:
-#### Central Example  
+For each platform (except classic Central), it is recommended to use the `unified_token` module to generate an OAuth token for the session then provide the generated token to each module as shown below. If playbooks are longer than 15min in execution, it is recommened to provide [Unified Credentials](#unified-credentials) to each module to ensure the token is valid.
+
+It's recommended to store credentials into variables so it's easily accessed - all examples, including below, demonstrate using variables for authentication. Alternatively, credentials such as the `*_client_id` and `*_client_secret` variables can be encrypted by using [Ansible's Vault](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&cad=rja&uact=8&ved=2ahUKEwi_-MOJuvePAxXcOTQIHYbUB2YQFnoECB8QAQ&url=https%3A%2F%2Fdocs.ansible.com%2Fansible%2F2.9%2Fuser_guide%2Fvault.html&usg=AOvVaw15tC1w67Azb-xcQnUh1I5B&opi=89978449) but are provided directly below for simplicity.  
+
 ```yaml
 ---
-- name: Generate Token and Create Libary Profile
+- name: Demo unified token generation
   hosts: localhost
   gather_facts: no
   tasks:
-    - name: Create OAuth Token from Central
-      arubanetworks.hpeanw_central.central_token:
-        base_url: https://us4.api.central.arubanetworks.com
-        client_id: 111222-333444-555666777888
-        client_secret: 888777666555444333222111
-      register: token_result
-      no_log: True
-
-    - set_fact:
-        central_access_token: "{{ token_result['access_token'] }}"
-      no_log: True
-
-    - name: Create a new Library VLAN profile with generated token
-      arubanetworks.hpeanw_central.central_profiles:
-        base_url: https://us4.api.central.arubanetworks.com
-        access_token: "{{ central_access_token }}"
-        name: 100
-        path: "layer2-vlan"
-        config_dict:
-          vlan: 100
-          name: "Corp-VLAN"
-          description: "Corporate VLAN for main office"
-        state: merged
-```  
-
-#### GLP Example  
-```yaml
----
-# Example playbook for HPE GreenLake Platform API calls
-- name: Demo HPE GreenLake Platform Devices Info
-  hosts: localhost
-  gather_facts: no
-  tasks:
-    - name: Generate Token for Session
-      arubanetworks.hpeanw_central.glp_token:
+    - name: Generate Unified Token for GLP + Central
+      arubanetworks.hpeanw_central.unified_token:
         client_id: "{{ glp_client_id }}"
         client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
       register: token_result
       no_log: True
 
-    - name: Get Devices in GLP with Token
-      arubanetworks.hpeanw_central.glp_devices_info:
-        access_token: "{{token_result['access_token']}}"
+    - name: Gather Devices Using Unified Token
+      arubanetworks.hpeanw_central.central_devices_info:
+        access_token: "{{ token_result['access_token'] }}"
+      register: devices_result
+
+    # Alternatively, provide credentials to modules directly
+
+    - name: Gather Central Devices & Info Using GLP Credentials
+      arubanetworks.hpeanw_central.central_devices_info:
+        base_url: "{{ central_base_url }}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
       register: devices_result
 ```
 
-### Host/Inventory Variables
+### Connection Variables
 
 Configure the following host/inventory variable to define the connection:
 
 - `ansible_connection`: Must be set to `local`
+
+## Examples
+Example playbooks and inventory file can be found under [`examples/`](./examples/). Documentation for all modules can be found under [`docs/`](./docs/).
+
+### Basic Example
+```yaml
+# inventory.yml
+all:
+  hosts:
+    localhost:
+      ansible_connection: local # Do not change
+      central_base_url: https://us4.api.central.arubanetworks.com
+      glp_client_id: 111222333444555666
+      glp_client_secret: 0099-8877-6655-4433-2211
+      glp_workspace_id: 1234567-7654321
+```
+
+```yaml
+# get_aps_playbook.yml
+- name: Get APs from Central
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Get Access Points from Central
+      arubanetworks.hpeanw_central.central_api:
+        base_url: "{{ central_base_url }}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
+        method: GET
+        path: "/network-monitoring/v1/aps"
+      register: devices_result
+
+    - debug: Display API Result
+        var: devices_result
+```
 
 ## Dynamic Inventory Plugin
 
@@ -171,51 +193,7 @@ Access Central credentials in playbooks (automatically available from inventory)
 
 For complete documentation, configuration options, and examples, see the [Central Inventory Plugin Guide](./docs/central_inventory_plugin.md).
 
-## Examples
-Example playbooks and inventory file can be found under [`examples/`](./examples/). Documentation for all modules can be found under [`docs/`](./docs/).
-
-### Basic Example
-It's recommended to store credentials into variabls so it's easily accessed - all examples, including below, demonstrate using variables for authentication. Alternatively, credentials such as the `client_id` and `client_secret` variables can be encrypted by using [Ansible's Vault](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&cad=rja&uact=8&ved=2ahUKEwi_-MOJuvePAxXcOTQIHYbUB2YQFnoECB8QAQ&url=https%3A%2F%2Fdocs.ansible.com%2Fansible%2F2.9%2Fuser_guide%2Fvault.html&usg=AOvVaw15tC1w67Azb-xcQnUh1I5B&opi=89978449) but are provided directly below for simplicity.  
-
-```yaml
-# inventory.yml
-all:
-  hosts:
-    localhost:
-      ansible_connection: local # Do not change
-      central_base_url: https://us4.api.central.arubanetworks.com
-      central_client_id: 111222-333444-555666777888
-      central_client_secret:  888777666555444333222111
-```
-
-```yaml
-# examples/central_api_demo.yml
-- name: Get devices from Central
-  hosts: localhost
-  gather_facts: no
-  tasks:
-    - name: Create OAuth Token from Central
-      arubanetworks.hpeanw_central.central_token:
-        base_url: "{{ central_base_url }}"
-        client_id: "{{ central_client_id }}"
-        client_secret: "{{ central_client_secret }}"
-      no_log: True
-      register: token_result
-
-    - set_fact:
-        classic_access_token: "{{ token_result['access_token'] }}"
-      no_log: True
-
-    - name: Get devices from Central
-      arubanetworks.hpeanw_central.central_api:
-        base_url: "{{ central_base_url }}"
-        access_token: "{{ classic_access_token }}"
-        method: GET
-        path: "/network-config/v1alpha1/devices"
-      register: devices_result
-
-    - debug:
-        var: devices_result
-```
-
-Alternatively users can design their inventory so that the hosts are the devices to be managed by Central like so:
+## Documentation
+- [Getting Started](https://developer.arubanetworks.com/new-central/docs/getting-started-with-ansible-and-central)
+- [Authentication](https://developer.arubanetworks.com/new-central/docs/ansible-authentication)
+- [MSP Automation](https://developer.arubanetworks.com/new-central/docs/ansible-msp-automation) 

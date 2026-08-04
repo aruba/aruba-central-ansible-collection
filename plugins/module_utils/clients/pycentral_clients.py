@@ -112,12 +112,74 @@ class GLPClient:
         return self.glp
 
 
-class MSPClient:
+class UnifiedClient:
     def __init__(
         self,
         client_id,
         client_secret,
         workspace_id,
+        access_token=None,
+        base_url=None,
+        **_,
+    ):
+        if not HAS_PYCENTRAL:
+            raise ImportError("The python pycentral package is required")
+
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.workspace_id = workspace_id
+        self.access_token = access_token
+        self.base_url = base_url  # If base_url is omitted, token will only be valid for GLP operations
+        self.unified = None
+        self._connect()
+
+    def _connect(self):
+        self._validate_params()
+        token_info = {
+            "unified": {
+                "client_id": self.client_id,
+                "client_secret": self.client_secret,
+                "workspace_id": self.workspace_id,
+            }
+        }
+
+        if self.access_token:
+            token_info["unified"]["access_token"] = self.access_token
+
+        # If base_url omitted, token will only be valid for GLP operations
+        if self.base_url:
+            token_info["unified"]["base_url"] = self.base_url
+
+        try:
+            self.unified = NewCentralBase(
+                token_info=token_info,
+                log_level="INFO",
+            )
+
+        except Exception as e:
+            raise ConnectionError(
+                f"Failed to connect with unified credentials: {e}"
+            )
+
+    def _validate_params(self):
+        if not self.client_id or not self.client_secret:
+            raise ValueError("`client_id` and `client_secret` are required")
+
+        if not self.workspace_id:
+            raise ValueError(
+                "`workspace_id` is required for unified token generation"
+            )
+
+    def get_unified_conn(self):
+        return self.unified
+
+
+class MSPClient:
+    def __init__(
+        self,
+        client_id,
+        client_secret,
+        msp_workspace_id,
         base_url=None,
         tenant_id=None,
         tenant_name=None,
@@ -130,7 +192,7 @@ class MSPClient:
         self.base_url = base_url
         self.client_id = client_id
         self.client_secret = client_secret
-        self.workspace_id = workspace_id
+        self.msp_workspace_id = msp_workspace_id
         self.tenant_id = tenant_id
         self.tenant_name = tenant_name
         self.access_token = access_token
@@ -142,15 +204,15 @@ class MSPClient:
     def _connect(self):
         self._validate_params()
         # Setup the token_info dictionary based on the provided parameters
-        token_info = {}
+        token_info = {"unified": {}}
 
         # Workspace ID is required for MSP token generation
-        if self.workspace_id:
-            token_info["unified"] = {"workspace_id": self.workspace_id}
+        if self.msp_workspace_id:
+            token_info["unified"]["workspace_id"] = self.msp_workspace_id
 
         # If base_url omitted, token will only be valid for GLP operations
         if self.base_url:
-            token_info["unified"] = {"base_url": self.base_url}
+            token_info["unified"]["base_url"] = self.base_url
 
         # Use client credentials to get a token
         if self.client_id and self.client_secret:
@@ -182,9 +244,9 @@ class MSPClient:
             raise ConnectionError(f"Failed to connect to Central: {e}")
 
     def _validate_params(self):
-        if not self.workspace_id:
+        if not self.msp_workspace_id:
             raise ValueError(
-                "`workspace_id` is required for MSP token generation"
+                "`msp_workspace_id` is required for MSP token generation"
             )
 
         if not self.client_id or not self.client_secret:
