@@ -2,7 +2,7 @@
 ---
 # Collections must specify a minimum required ansible version to upload
 # to galaxy
-requires_ansible: '<=2.19.6'
+requires_ansible: '<=2.19.10'
 
 # Content that Ansible needs to load from another location or that has
 # been deprecated/removed

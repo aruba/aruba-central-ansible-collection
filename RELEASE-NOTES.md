@@ -1,5 +1,34 @@
 # Release Notes
 
+## Version 2.2.0-beta
+
+### Overview
+Version 2.2.0-beta introduces unified credentials support across all Central and GLP modules, a new `unified_token` module, and several consistency and clarity improvements.
+
+### New Features
+
+#### New Modules
+- **`unified_token`** - Module for generating OAuth tokens using unified credentials, enabling a single authentication flow across Central and GLP APIs
+
+#### Module Enhancements
+- **`central_api`, `glp_api`, and all Central/GLP modules`** - Added `workspace_id`, `tenant_name`, and `tenant_id` parameters to support unified or MSP authentication; refactored connection handling to use a common method for improved consistency
+- **`msp_token`** - Renamed `workspace_id` to `msp_workspace_id` for clarity and consistency
+- **`central_profiles`** - Updated local profile options to use `scope-id` and `device-function` parameter names for clarity
+
+### Bug Fixes & Improvements
+- Added `base_url` parameter to `UnifiedClient` and `MSPClient` for improved token validity
+- Updated required Ansible version in `runtime.yml`
+
+### Documentation & Examples
+- Added `AUTHENTICATION.md` guide covering unified credentials usage and configuration
+- Refactored all example playbooks to use unified token authentication instead of platform-specific tokens
+- Added `workspace_id` parameter to GLP API examples
+- Updated `README` to reflect unified credentials usage and inventory configuration changes
+- Enhanced documentation across all Central and GLP modules to clarify `client_id`, `client_secret`, and `workspace_id` usage with unified credentials
+
+---
+
+
 ## Version 2.1.1-beta
 
 ### Overview
