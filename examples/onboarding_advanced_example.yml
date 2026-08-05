@@ -16,18 +16,12 @@
       - TW3BLZBBBB
       - CNSKKLBBB8
   tasks:
-    # Authenticate to GreenLake Platform and obtain access token for API calls
-    - name: Generate Token for Session
-      arubanetworks.hpeanw_central.glp_token:
-        client_id: "{{ glp_client_id }}"
-        client_secret: "{{ glp_client_secret }}"
-      register: token_result
-      no_log: True
-
     # Fetch all devices currently registered in GreenLake Platform
     - name: Retrieve Devices from GLP
       arubanetworks.hpeanw_central.glp_devices_info:
-        access_token: "{{token_result['access_token']}}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
       register: glp_device_inventory
 
     # Build a list of devices to be onboarded based on serial numbers provided
@@ -47,7 +41,9 @@
     # Assign devices to their appropriate applications and subscriptions in GreenLake Platform
     - name: Assign Devices to GLP & Assign subscriptions
       arubanetworks.hpeanw_central.glp_devices:
-        access_token: "{{token_result['access_token']}}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
         application:
           id: "{{ device_part_mapping[item.partNumber].application.id }}"
           region: "{{application_region}}"
@@ -62,7 +58,9 @@
     - name: Create Site Ansible_Site in Central
       arubanetworks.hpeanw_central.central_sites:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ central_access_token }}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
         site_attributes:
           name: "{{ site_name }}"
           address: "123 Main St"
@@ -119,7 +117,9 @@
     - name: Assign Device Functions/Personas in HPE Aruba Networking Central
       arubanetworks.hpeanw_central.central_api:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ central_access_token }}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
         method: POST
         path: "/network-config/v1alpha1/persona-assignment/{{ 'ACCESS_SWITCH' if item.deviceType == 'SWITCH' else ('CAMPUS_AP' if item.deviceType == 'ACCESS_POINT' else 'MOBILITY_GW') }}"
         data:

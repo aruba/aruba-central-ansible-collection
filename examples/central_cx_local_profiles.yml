@@ -18,20 +18,12 @@
         access_vlan: 100
   gather_facts: no
   tasks:
-    - name: Create OAuth Token from Central
-      arubanetworks.hpeanw_central.central_token:
-        base_url: "{{ central_base_url }}"
-        client_id: "{{ central_client_id }}"
-        client_secret: "{{ central_client_secret }}"
-      register: token_result
-
-    - set_fact:
-        central_access_token: "{{ token_result['access_token'] }}"
-
     - name: Create Library Vlan Config Profile
       arubanetworks.hpeanw_central.central_profiles:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ central_access_token }}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
         path: "layer2-vlan"
         name: 100
         state: merged
@@ -43,7 +35,9 @@
     - name: Assign Library Profile to Scope
       arubanetworks.hpeanw_central.central_api:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ central_access_token }}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
         method: POST
         path: "/network-config/v1alpha1/scope-maps"
         data:
@@ -55,7 +49,9 @@
     - name: Update local L2 interfaces Device scope
       arubanetworks.hpeanw_central.central_profiles:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ central_access_token }}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
         name: "{{item.interface}}"
         path: "ethernet-interfaces"
         resource: "ethernet-interfaces"
@@ -76,7 +72,9 @@
     - name: Create a local Banner Device scope
       arubanetworks.hpeanw_central.central_profiles:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ central_access_token }}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
         name: profile-{{switch_serial}}
         path: local-management
         resource: local-management

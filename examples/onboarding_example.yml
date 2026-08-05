@@ -9,16 +9,11 @@
     site_name: "Ansible-Campus"
     group_name: "Ansible-APs"
   tasks:
-    - name: Generate Token for Session
-      arubanetworks.hpeanw_central.glp_token:
-        client_id: "{{ glp_client_id }}"
-        client_secret: "{{ glp_client_secret }}"
-      register: token_result
-      no_log: True
-
     - name: Add Devices to GLP Inventory
       arubanetworks.hpeanw_central.glp_inventory:
-        access_token: "{{token_result['access_token']}}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
         devices:
           - serial_number: PHQSL1116K
             mac_address: 8c:85:cc:55:c0:81
@@ -28,7 +23,9 @@
 
     - name: Assign Devices to GLP & Assign subscriptions
       arubanetworks.hpeanw_central.glp_devices:
-        access_token: "{{token_result['access_token']}}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
         application:
           name: HPE Aruba Networking Central
           region: "US West"
@@ -38,22 +35,12 @@
           - "PHQSL222HB"
         state: "assigned"
 
-    - name: Create OAuth Token from Central
-      arubanetworks.hpeanw_central.central_token:
-        base_url: "{{ central_base_url }}"
-        client_id: "{{ central_client_id }}"
-        client_secret: "{{ central_client_secret }}"
-      register: token_result
-      no_log: True
-
-    - set_fact:
-        central_access_token: "{{ token_result['access_token'] }}"
-      no_log: True
-
     - name: Create Site Ansible_Site in Central
       arubanetworks.hpeanw_central.central_sites:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ central_access_token }}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
         site_attributes:
           name: "{{ site_name }}"
           address: "123 Main St"
@@ -99,7 +86,9 @@
     - name: Assign Device Functions/Personas in HPE Aruba Networking Central
       arubanetworks.hpeanw_central.central_api:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ central_access_token }}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
         method: POST
         path: "/network-config/v1alpha1/persona-assignment"
         data:

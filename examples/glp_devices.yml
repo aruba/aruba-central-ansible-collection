@@ -4,15 +4,11 @@
   hosts: localhost
   gather_facts: no
   tasks:
-    - name: Generate Token for Session
-      arubanetworks.hpeanw_central.glp_token:
-        client_id: "{{ glp_client_id }}"
-        client_secret: "{{ glp_client_secret }}"
-      register: token_result
-
     - name: Assign Devices to GLP
       arubanetworks.hpeanw_central.glp_devices:
-        access_token: "{{token_result['access_token']}}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
         application:
           name: HPE Aruba Networking Central Internal
           region: "US West"

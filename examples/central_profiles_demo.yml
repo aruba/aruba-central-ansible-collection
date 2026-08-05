@@ -4,23 +4,12 @@
   hosts: localhost
   gather_facts: no
   tasks:
-    - name: Create OAuth Token from Central
-      arubanetworks.hpeanw_central.central_token:
-        base_url: "{{ central_base_url }}"
-        client_id: "{{ central_client_id }}"
-        client_secret: "{{ central_client_secret }}"
-      register: token_result
-
-    - debug:
-        var: token_result
-
-    - set_fact:
-        central_access_token: "{{ token_result['access_token'] }}"
-
     - name: Create a new Library VLAN profile
       arubanetworks.hpeanw_central.central_profiles:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ central_access_token }}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
         name: 100
         path: "layer2-vlan"
         config_dict:
@@ -32,7 +21,9 @@
     - name: Create Library Default Gateway
       arubanetworks.hpeanw_central.central_profiles:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ central_access_token }}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
         name: rsvl-default-gateway
         path: static-route
         state: merged
@@ -45,7 +36,9 @@
     - name: Create Library VRFs
       arubanetworks.hpeanw_central.central_profiles:
         base_url: "{{ central_base_url }}"
-        access_token: "{{ central_access_token }}"
+        client_id: "{{ glp_client_id }}"
+        client_secret: "{{ glp_client_secret }}"
+        workspace_id: "{{ glp_workspace_id }}"
         name: "{{item}}"
         path: vrfs
         state: merged

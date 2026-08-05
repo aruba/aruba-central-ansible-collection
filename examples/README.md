@@ -5,7 +5,7 @@ This directory contains example Ansible playbooks demonstrating how to use the H
 
 ## Inventory Configuration
 
-Edit the `inventory.yml` file and replace the placeholder values with your Central API credentials. Refer to [this guide](https://developer.arubanetworks.com/new-central/docs/making-api-calls#3-choosing-the-right-base-url) on how to find your Base URL and use this guide for instructions on [how to generate and manage an access token](https://developer.arubanetworks.com/new-central/docs/generating-and-managing-access-tokens):
+These workflows take advantage of the unified credentials capabilities of HPE GreenLake Platform and Central. Edit the `basic_inventory.yml` file and replace the placeholder values with your credentials. Refer to [this guide](https://developer.arubanetworks.com/new-central/docs/making-api-calls#3-choosing-the-right-base-url) to find your Central Base URL and [this guide](https://developer.greenlake.hpe.com/docs/greenlake/guides/public/authentication/authentication/#creating-a-personal-api-client) to create GLP API client credentials and retrieve your GLP workspace ID:
 
 ```yaml
 all:
@@ -13,9 +13,14 @@ all:
     localhost:
       ansible_connection: local
       central_base_url: <your_central_instance_url>
-      central_client_id: <your_client_id>
-      central_client_secret: <your_client_secret>
+      glp_client_id: <your_glp_client_id>
+      glp_client_secret: <your_glp_client_secret>
+      glp_workspace_id: <your_glp_workspace_id>
+      classic_base_url: <your_classic_central_url>
+      classic_access_token: <your_classic_access_token>
 ```
+
+Central and GLP modules accept `client_id`, `client_secret`, and `workspace_id` directly — no separate token generation step is required. Classic Central modules require a pre-generated `classic_access_token`.
 
 ## Available Examples
 
@@ -82,4 +87,56 @@ Reverses the changes made by the `central_cx_local_profiles.yml` playbook.
 **Usage:**
 ```bash
 ansible-playbook -i inventory.yml undo_central_cx_local_profiles.yml
+```
+
+### 5. Device Onboarding (`onboarding_example.yml`)
+
+Demonstrates a typical end-to-end workflow for onboarding devices into HPE GreenLake Platform and Central.
+
+**Requirements:**
+- GLP credentials (`glp_client_id`, `glp_client_secret`, `glp_workspace_id`)
+- Central Base URL (`central_base_url`)
+- Classic Central credentials (`classic_base_url`, `classic_access_token`)
+- Edit the `vars` section and device serial numbers / MAC addresses in the playbook
+
+**Description:** This playbook covers the full onboarding sequence for access points:
+1. Adds devices to GLP inventory by serial number and MAC address
+2. Assigns devices to an application and subscription in GLP
+3. Creates a site in Central
+4. Assigns devices to the site via Classic Central APIs
+5. Creates a device group and assigns devices for configuration management
+6. Assigns device functions/personas (`CAMPUS_AP`) in Central
+
+**Usage:**
+```bash
+ansible-playbook -i inventory.yml onboarding_example.yml
+```
+
+### 6. Advanced Device Onboarding (`onboarding_advanced_example.yml`)
+
+Extends the basic onboarding example with dynamic device handling, automatically mapping devices to applications and subscriptions based on their part numbers.
+
+**Requirements:**
+- GLP credentials (`glp_client_id`, `glp_client_secret`, `glp_workspace_id`)
+- Central Base URL (`central_base_url`)
+- Classic Central credentials (`classic_base_url`, `classic_access_token`)
+- Devices must already be present in GLP inventory
+- Edit the `vars` section at the top of the playbook:
+  - `site_name`: Name of the site to create in Central
+  - `group_name`: Prefix for device type-specific group names
+  - `application_region`: GreenLake region (e.g. `us-west`)
+  - `onboard_list`: List of device serial numbers to onboard
+
+**Description:** This playbook dynamically handles mixed-device onboarding:
+1. Retrieves the full GLP device inventory
+2. Filters it to the devices listed in `onboard_list`
+3. Builds a part-number-to-application/subscription mapping from existing inventory data
+4. Assigns each device to its appropriate application and subscription
+5. Creates a site in Central
+6. Assigns each device to the site and a per-device-type group in Classic Central
+7. Assigns device functions/personas dynamically based on device type (`CAMPUS_AP`, `ACCESS_SWITCH`, or `MOBILITY_GW`)
+
+**Usage:**
+```bash
+ansible-playbook -i inventory.yml onboarding_advanced_example.yml
 ```

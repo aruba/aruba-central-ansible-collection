@@ -7,5 +7,6 @@ all:
       central_client_secret:  <central_client_secret>
       glp_client_id: <glp_client_id>
       glp_client_secret: <glp_client_secret>
+      glp_workspace_id: <glp_workspace_id>
       classic_base_url: <classic_base_url>
       classic_access_token: <classic_access_token>
