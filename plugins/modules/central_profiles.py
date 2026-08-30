@@ -380,33 +380,52 @@ def main():
 
             # Use Update instead of Create if resource already exists
             elif state == "merged" and get_success and existing_obj_dict:
-                # Compare existing config with desired config to show diff
-                diff_found = False
-                before_config = existing_obj_dict.copy()
-                after_config = before_config.copy()
-
-                for key, value in config.items():
-                    if (
-                        key not in existing_obj_dict
-                        or existing_obj_dict[key] != value
-                    ):
-                        diff_found = True
-                        after_config[key] = value
-
-                if diff_found:
-                    modified = True
-                    result["msg"]["message"] = (
-                        "Existing profile would be updated"
+                if isinstance(existing_obj_dict, list):
+                    # Collection endpoint: item may not exist despite non-empty GET
+                    item_exists = any(
+                        all(item.get(k) == v for k, v in config.items())
+                        for item in existing_obj_dict
+                        if isinstance(item, dict)
                     )
-                    result["diff"] = {
-                        "before": before_config,
-                        "after": after_config,
-                    }
+                    if item_exists:
+                        modified = False
+                        result["msg"]["message"] = (
+                            "No changes needed - profile matches desired state"
+                        )
+                    else:
+                        modified = True
+                        result["msg"]["message"] = (
+                            "New profile would be created"
+                        )
+                        result["diff"] = {"before": {}, "after": config}
                 else:
-                    modified = False
-                    result["msg"]["message"] = (
-                        "No changes needed - profile matches desired state"
-                    )
+                    # Compare existing config with desired config to show diff
+                    diff_found = False
+                    before_config = existing_obj_dict.copy()
+                    after_config = before_config.copy()
+
+                    for key, value in config.items():
+                        if (
+                            key not in existing_obj_dict
+                            or existing_obj_dict[key] != value
+                        ):
+                            diff_found = True
+                            after_config[key] = value
+
+                    if diff_found:
+                        modified = True
+                        result["msg"]["message"] = (
+                            "Existing profile would be updated"
+                        )
+                        result["diff"] = {
+                            "before": before_config,
+                            "after": after_config,
+                        }
+                    else:
+                        modified = False
+                        result["msg"]["message"] = (
+                            "No changes needed - profile matches desired state"
+                        )
 
             elif state == "replaced":
                 if get_success and existing_obj_dict:
@@ -459,6 +478,11 @@ def main():
                 modified, result = profile_obj.update(
                     compare_dict=existing_obj_dict
                 )
+                # Item not in collection despite successful GET; fall back to create
+                if result.get("code") == 400 and "doesn't exist" in result.get(
+                    "msg", {}
+                ).get("message", ""):
+                    modified, result = profile_obj.create()
 
             elif state == "replaced":
                 # Some objects cannot be deleted - should it fail?
