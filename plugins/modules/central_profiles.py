@@ -82,20 +82,20 @@ options:
     required: false
   local:
     description: >
-      Dictionary containing scope-id (integer) and device-function (string) values to create a LOCAL profile
-      If provided, the profile will be created as a LOCAL profile associated with the specified scope and device-function
+      Dictionary containing scope_id (integer) and device_function (string) values to create a LOCAL profile
+      If provided, the profile will be created as a LOCAL profile associated with the specified scope and device_function
       Requires `resource` to be set, will be set automatically when using `category`
     type: dict
     required: false
     suboptions:
-      scope-id:
+      scope_id:
         description:
           - The scope ID to associate with the LOCAL profile
         type: int
         required: true
-      device-function:
+      device_function:
         description:
-          - The device-function to associate with the LOCAL profile
+          - The device_function to associate with the LOCAL profile
         type: str
         required: true
   state:
@@ -136,8 +136,8 @@ EXAMPLES = r"""
     path: "system-info"
     state: merged
     local:
-      scope-id: 46344420928
-      device-function: "ACCESS_SWITCH"
+      scope_id: 46344420928
+      device_function: "ACCESS_SWITCH"
     config_dict:
       hostname: RSVL-L1-Access-ANSIBLE
 
@@ -339,7 +339,7 @@ def main():
             if path_sections and (name not in path_sections[-1]):
                 profile_obj.set_path(path + "/" + name)
         if local and validate_local(local):
-            local["scope-id"] = int(local["scope-id"])
+            local["scope_id"] = int(local["scope_id"])
             profile_obj.set_local_parameters(local)
 
         if not resource and local:
